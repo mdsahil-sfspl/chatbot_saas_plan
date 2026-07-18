@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 2 — Rate Limiting, Done Right</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1320; --panel:#141B2B; --panel2:#172033; --ink:#EAEEF6; --muted:#9AA6BC; --faint:#6E7A92;
+    --line:#222C40; --line2:#2C3650;
+    --green:#46C98B; --green-d:#1C7A53; --green-bg:#13261F;
+    --blue:#5B8DEF; --blue-bg:#142036; --blue-ln:#2A3E66;
+    --teal:#34C6C0; --teal-bg:#11272B;
+    --amber:#E0A537; --amber-bg:#2A2113; --amber-ln:#5A4413;
+    --red:#E5705F; --red-bg:#2A1715; --red-ln:#5A2A22;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+    --shadow:0 12px 34px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1000px 460px at 82% -8%,rgba(91,141,239,.10),transparent 60%),
+      radial-gradient(820px 460px at -8% 8%,rgba(52,198,192,.08),transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  code{font-family:var(--mono);font-size:.86em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .wrap{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 22px}
+  .topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-right:auto}
+  .topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+  .topnav a:hover{background:#1A2336;color:var(--ink)}
+
+  .hero{padding:60px 0 24px}
+  .kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;border:1px solid var(--teal);border-radius:30px;padding:5px 13px;background:var(--teal-bg)}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;margin:18px 0 14px}
+  h1 .g{background:linear-gradient(90deg,#5B8DEF,#34C6C0);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:18px;color:#C2CCDE;max-width:700px;margin:0}
+  .lede b{color:#fff}
+
+  .sec{padding:42px 0 4px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.3vw,29px);letter-spacing:-.01em;margin:8px 0 4px;color:#fff}
+  .sec .sub{color:var(--muted);margin:0;max-width:720px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px 24px;margin:18px 0}
+  .now{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;margin-top:4px}
+  .now .it{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#C7D2E6}
+  .now .it .b{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:11px;white-space:nowrap;margin-top:1px}
+  .b.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-d)}
+  .b.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
+  .b.gap{background:var(--red-bg);color:var(--red);border:1px solid var(--red-ln)}
+  .surprise{margin-top:16px;background:var(--red-bg);border:1px solid var(--red-ln);border-radius:11px;padding:13px 15px;font-size:14px;color:#F2C9C1}
+  .surprise b{color:#fff} .surprise .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);font-weight:600;display:block;margin-bottom:5px}
+
+  .figure{background:#0B1018;border:1px solid var(--line2);border-radius:14px;padding:16px;margin:14px 0}
+  .figure svg{display:block;width:100%;height:auto}
+
+  /* subtask cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin:18px 0;overflow:hidden}
+  .card .head{padding:18px 22px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(91,141,239,.05),transparent)}
+  .card.r .head{background:linear-gradient(180deg,rgba(229,112,95,.06),transparent)}
+  .card .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-weight:600;font-size:12px;color:#0E1320;background:var(--teal);padding:4px 10px;border-radius:9px}
+  .card.r .tag{background:var(--red)}
+  .card h3{font-family:var(--disp);font-weight:600;font-size:19px;margin:0;color:#fff;letter-spacing:-.01em}
+  .meta{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:3px 10px}
+  .files{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+  .files .file{font-family:var(--mono);font-size:10.5px;color:#9FE3D0;background:var(--green-bg);border:1px solid var(--green-d);border-radius:6px;padding:3px 8px}
+  .body{padding:8px 22px 20px}
+  ol.steps{margin:6px 0 0;padding:0;list-style:none;counter-reset:st}
+  ol.steps>li{counter-increment:st;position:relative;padding:0 0 14px 32px;font-size:14.5px;color:#CAD4E6}
+  ol.steps>li::before{content:counter(st);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:7px;background:#1C2538;border:1px solid var(--line2);color:var(--teal);font-family:var(--mono);font-size:11px;font-weight:600;display:grid;place-items:center}
+  ol.steps>li b{color:#fff}
+
+  pre.code{margin:11px 0 2px;background:#0B1018;border:1px solid var(--line2);border-radius:11px;padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:12.4px;line-height:1.65;color:#D7E0F0}
+  pre.code .c{color:#5C7B6B} pre.code .k{color:#7FA6F0} pre.code .s{color:#8FD8B0} pre.code .f{color:#E0A537}
+
+  .note{margin:12px 0 2px;border-radius:11px;padding:11px 14px;font-size:13.5px;line-height:1.55}
+  .note.tip{background:var(--blue-bg);border:1px solid var(--blue-ln);color:#C9D7F2}
+  .note .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px;color:var(--blue)}
+  .note b{color:#fff}
+
+  table{border-collapse:collapse;width:100%;font-size:12.6px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td.e{font-family:var(--mono);color:#A9C2F2}
+  .pill{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:11px}
+  .p-have{background:var(--green-bg);color:var(--green)} .p-add{background:var(--amber-bg);color:var(--amber)} .p-ws{background:var(--red-bg);color:var(--red)}
+
+  .check{background:linear-gradient(160deg,#101a2e,#0c1422);border:1px solid var(--line2);border-radius:18px;padding:24px 26px;margin:18px 0}
+  .check .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:12px}
+  .check ul{margin:0;padding:0;list-style:none}
+  .check li{position:relative;padding:7px 0 7px 30px;font-size:14px;color:#CAD4E6;border-top:1px solid var(--line)}
+  .check li:first-child{border-top:none}
+  .check li::before{content:"";position:absolute;left:2px;top:11px;width:13px;height:13px;border-radius:4px;border:1.5px solid var(--teal)}
+  .check b{color:#fff}
+
+  footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:26px}
+  @media(max-width:760px){.now{grid-template-columns:1fr}.meta{margin-left:0}.topnav a:nth-child(n+5){display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">Task 2 · Rate Limiting</span>
+  <a href="#now">Today</a>
+  <a href="#model">Model</a>
+  <a href="#do">What to do</a>
+  <a href="#table">Limits table</a>
+  <a href="#done">Done when</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kchip">● Deep-dive · mapped to your routes</span>
+  <h1>Task 2 — <span class="g">rate limiting, done right</span></h1>
+  <p class="lede">Your limiter isn't missing — it's <b>stored in the wrong place</b>, and your most expensive paths (chat &amp; voice) run over <b>WebSocket, where it can't reach</b>. Here's exactly what to do, grounded in your code.</p>
+</div></header>
+
+<!-- TODAY -->
+<section class="sec" id="now"><div class="wrap">
+  <div class="seclabel">Where you are today</div>
+  <h2>What your code does right now</h2>
+  <div class="panel">
+    <div class="now">
+      <div class="it"><span class="b ok">have</span><span><b style="color:#fff">4 auth endpoints limited</b> — <code>login</code> 3/min, <code>change/forgot/reset_password</code> 1 per 5 min.</span></div>
+      <div class="it"><span class="b warn">flaw</span><span><b style="color:#fff">Stored in memory</b> — with <code>WORKERS=4</code>, that's 4 separate counters that don't agree.</span></div>
+      <div class="it"><span class="b warn">gap</span><span><b style="color:#fff">~102 of 106 endpoints</b> have no limit — including document uploads and vision.</span></div>
+      <div class="it"><span class="b ok">have</span><span><b style="color:#fff">Usage quota works</b> — <code>usage_limiter.py</code> caps STT/TTS/OCR <i>seconds per day</i>.</span></div>
+    </div>
+    <div class="surprise">
+      <span class="l">The surprise that changes the plan</span>
+      Your main <b>chat</b> (<code>/ws/chat</code>) and <b>voice</b> (<code>/ws/stt-fast</code>) run over <b>WebSocket</b>. slowapi's <code>@limiter.limit</code> only works on HTTP routes — <b>it cannot limit messages on a socket.</b> So today your most expensive, most abusable paths have <b>zero frequency protection.</b>
+    </div>
+  </div>
+</div></section>
+
+<!-- MODEL -->
+<section class="sec" id="model"><div class="wrap">
+  <div class="seclabel">The mental model</div>
+  <h2>Two layers, three doors</h2>
+  <p class="sub">You guard three kinds of door with two kinds of lock. slowapi (rate = how <i>often</i>) plus your quota (volume = how <i>much</i>). The WebSocket door is the one currently unlocked.</p>
+  <div class="figure">
+    <svg viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three doors: HTTP auth is guarded by slowapi, HTTP expensive needs limits added, WebSocket is a gap. A quota layer covers voice volume.">
+      <text x="20" y="22" font-family="JetBrains Mono" font-size="11" fill="#6E7A92" letter-spacing="1">RATE LIMIT LAYER (how often)</text>
+      <!-- door 1 -->
+      <rect x="20" y="34" width="190" height="120" rx="11" fill="#13261F" stroke="#1C7A53"/>
+      <text x="115" y="58" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#EAEEF6" text-anchor="middle">HTTP · Auth</text>
+      <text x="115" y="80" font-family="Inter" font-size="11" fill="#9AA6BC" text-anchor="middle">login · password</text>
+      <rect x="55" y="96" width="120" height="22" rx="11" fill="#0E1320" stroke="#1C7A53"/><text x="115" y="111" font-family="JetBrains Mono" font-size="10" font-weight="600" fill="#46C98B" text-anchor="middle">slowapi ✓</text>
+      <text x="115" y="138" font-family="Inter" font-size="10.5" fill="#9AA6BC" text-anchor="middle">fix storage → Redis</text>
+      <!-- door 2 -->
+      <rect x="225" y="34" width="190" height="120" rx="11" fill="#2A2113" stroke="#5A4413"/>
+      <text x="320" y="58" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#EAEEF6" text-anchor="middle">HTTP · Expensive</text>
+      <text x="320" y="80" font-family="Inter" font-size="11" fill="#9AA6BC" text-anchor="middle">uploads · ask-vision</text>
+      <rect x="260" y="96" width="120" height="22" rx="11" fill="#0E1320" stroke="#5A4413"/><text x="320" y="111" font-family="JetBrains Mono" font-size="10" font-weight="600" fill="#E0A537" text-anchor="middle">no limit</text>
+      <text x="320" y="138" font-family="Inter" font-size="10.5" fill="#9AA6BC" text-anchor="middle">add slowapi limits</text>
+      <!-- door 3 -->
+      <rect x="430" y="34" width="190" height="120" rx="11" fill="#2A1715" stroke="#5A2A22"/>
+      <text x="525" y="58" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#EAEEF6" text-anchor="middle">WebSocket</text>
+      <text x="525" y="80" font-family="Inter" font-size="11" fill="#9AA6BC" text-anchor="middle">chat · voice · vision</text>
+      <rect x="465" y="96" width="120" height="22" rx="11" fill="#0E1320" stroke="#5A2A22"/><text x="525" y="111" font-family="JetBrains Mono" font-size="10" font-weight="600" fill="#E5705F" text-anchor="middle">GAP · unreachable</text>
+      <text x="525" y="138" font-family="Inter" font-size="10.5" fill="#9AA6BC" text-anchor="middle">add manual WS limit</text>
+      <!-- quota layer -->
+      <text x="20" y="186" font-family="JetBrains Mono" font-size="11" fill="#6E7A92" letter-spacing="1">QUOTA LAYER (how much)</text>
+      <rect x="20" y="196" width="600" height="48" rx="11" fill="#11272B" stroke="#1F5C58"/>
+      <text x="320" y="216" font-family="Space Grotesk" font-size="12.5" font-weight="600" fill="#34C6C0" text-anchor="middle">usage_limiter.py — caps STT / TTS / OCR seconds per day</text>
+      <text x="320" y="233" font-family="Inter" font-size="10.5" fill="#9AA6BC" text-anchor="middle">already working · controls volume &amp; cost, not frequency</text>
+    </svg>
+  </div>
+</div></section>
+
+<!-- WHAT TO DO -->
+<section class="sec" id="do"><div class="wrap">
+  <div class="seclabel">What to do · in order</div>
+  <h2>The three moves</h2>
+  <p class="sub">Do them in this order — 2a is the one-line foundation, 2c closes the real gap.</p>
+
+  <!-- 2a -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">2a</span><h3>Move the counter into Redis</h3><span class="meta">~half a day · do first</span></div>
+      <div class="files"><span class="file">api/session_auth.py</span><span class="file">config/settings.py</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Add the Redis URL</b> to settings (you already run Redis for sessions).</li>
+        <li><b>Point the limiter at it</b> — one line. Now all 4 workers share one count instead of four.
+          <pre class="code"><span class="c"># api/session_auth.py</span>
+limiter = Limiter(key_func=get_remote_address, storage_uri=settings.REDIS_URL)</pre>
+        </li>
+        <li><b>Verify</b> — hit <code>login</code> 4 times fast; the 4th must be blocked regardless of which worker answers.</li>
+      </ol>
+      <div class="note tip"><span class="l">Why this comes first</span>Until counts are shared, even your good <code>3/minute</code> login limit is really ~12/minute and resets at random. Every other move depends on this working.</div>
+    </div>
+  </div>
+
+  <!-- 2b -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">2b</span><h3>Limit the expensive HTTP endpoints</h3><span class="meta">~1 day</span></div>
+      <div class="files"><span class="file">admin/routers/* (uploads)</span><span class="file">image/router.py (/ask-vision)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Add a key helper</b> so logged-in calls are limited per user, not per shared office IP.
+          <pre class="code"><span class="c"># core/ratelimit_keys.py</span>
+<span class="k">def</span> <span class="f">user_key</span>(request):
+    <span class="k">return</span> getattr(request.state, <span class="s">"user_id"</span>, None) <span class="k">or</span> get_remote_address(request)</pre>
+        </li>
+        <li><b>Cap the cost-heavy routes</b> — document uploads (embedding/OCR) and the HTTP vision endpoint.
+          <pre class="code"><span class="c"># uploads — heavy embedding / OCR work</span>
+<span class="f">@router.post</span>(<span class="s">"/api/bots/upload-documents"</span>)
+<span class="f">@limiter.limit</span>(<span class="s">"10/hour"</span>, key_func=user_key)
+
+<span class="c"># image/router.py — vision call</span>
+<span class="f">@router.post</span>(<span class="s">"/ask-vision"</span>)
+<span class="f">@limiter.limit</span>(<span class="s">"30/minute"</span>, key_func=user_key)</pre>
+        </li>
+        <li><b>Re-key <code>change_password</code></b> to <code>user_key</code> (it's a logged-in action — IP is the wrong key there).</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 2c -->
+  <div class="card r">
+    <div class="head">
+      <div class="row"><span class="tag">2c</span><h3>Limit the WebSocket paths — the real gap</h3><span class="meta">~2–3 days · most important</span></div>
+      <div class="files"><span class="file">api/websocket.py (/ws/chat, /ws/stt-fast)</span><span class="file">core/ws_ratelimit.py (new)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Write a tiny Redis counter</b> — slowapi can't help here, so do it by hand. A few lines.
+          <pre class="code"><span class="c"># core/ws_ratelimit.py</span>
+<span class="k">async def</span> <span class="f">rate_ok</span>(user_id, bucket, limit, window):
+    key = <span class="s">f"rl:{user_id}:{bucket}"</span>
+    n = <span class="k">await</span> redis.incr(key)
+    <span class="k">if</span> n == 1: <span class="k">await</span> redis.expire(key, window)
+    <span class="k">return</span> n &lt;= limit</pre>
+        </li>
+        <li><b>Throttle messages per user</b> inside the chat / STT handlers (you already read the user from the socket).
+          <pre class="code"><span class="c"># api/websocket.py — inside ws_chat, per incoming message</span>
+user_id = _get_user_id_from_ws(websocket)
+<span class="k">if not await</span> rate_ok(user_id, <span class="s">"chat"</span>, limit=60, window=60):
+    <span class="k">await</span> ws_safe_send_text(websocket, {<span class="s">"error"</span>: <span class="s">"rate_limited"</span>})
+    <span class="k">continue</span>   <span class="c"># skip this message, keep the socket</span></pre>
+        </li>
+        <li><b>Cap concurrent connections per user</b> at accept time, so one account can't open hundreds of sockets.
+          <pre class="code"><span class="c"># at accept</span>
+<span class="k">if await</span> redis.scard(<span class="s">f"ws:{user_id}"</span>) &gt;= 3:
+    <span class="k">await</span> websocket.close(code=1013)  <span class="c"># try again later</span></pre>
+        </li>
+        <li><b>Keep the quota in place</b> — voice volume is still capped by <code>usage_limiter.py</code> (seconds/day). 2c adds the missing <i>frequency</i> guard on top.</li>
+      </ol>
+      <div class="note tip"><span class="l">Why 2c matters most</span>This is your only path that touches the LLM and voice spend with no frequency cap today. Closing it is the difference between "limits exist" and "limits protect the expensive stuff."</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- TABLE -->
+<section class="sec" id="table"><div class="wrap">
+  <div class="seclabel">Reference</div>
+  <h2>Your routes → limit, key, tool</h2>
+  <p class="sub">One algorithm everywhere — sliding window for HTTP, a simple Redis window for WebSocket. We vary the <b>number</b> and the <b>key</b>, not the algorithm.</p>
+  <table>
+    <thead><tr><th>Door</th><th>Route</th><th>Limit</th><th>Key</th><th>Tool</th></tr></thead>
+    <tbody>
+      <tr><td>HTTP auth</td><td class="e">/login</td><td>3 / min</td><td>IP</td><td><span class="pill p-have">have</span></td></tr>
+      <tr><td>HTTP auth</td><td class="e">/forgot · /reset_password</td><td>1 / 5 min</td><td>IP</td><td><span class="pill p-have">have</span></td></tr>
+      <tr><td>HTTP auth</td><td class="e">/change_password</td><td>1 / 5 min</td><td>user</td><td><span class="pill p-add">re-key</span></td></tr>
+      <tr><td>HTTP heavy</td><td class="e">/api/bots/upload-documents</td><td>10 / hour</td><td>user/tenant</td><td><span class="pill p-add">add</span></td></tr>
+      <tr><td>HTTP heavy</td><td class="e">/api/users/bulk-upload · upload-image</td><td>20 / hour</td><td>user/tenant</td><td><span class="pill p-add">add</span></td></tr>
+      <tr><td>HTTP heavy</td><td class="e">/ask-vision</td><td>30 / min</td><td>user</td><td><span class="pill p-add">add</span></td></tr>
+      <tr><td>WebSocket</td><td class="e">/ws/chat</td><td>60 msg/min + 3 conns</td><td>user</td><td><span class="pill p-ws">manual</span></td></tr>
+      <tr><td>WebSocket</td><td class="e">/ws/stt-fast</td><td>30 msg/min + quota</td><td>user</td><td><span class="pill p-ws">manual</span></td></tr>
+      <tr><td>WebSocket</td><td class="e">/ws-ask-vision</td><td>30 msg/min</td><td>user</td><td><span class="pill p-ws">manual</span></td></tr>
+    </tbody>
+  </table>
+  <div class="note tip" style="margin-top:14px"><span class="l">On algorithms</span>Stick to <b>one</b> algorithm. Only upgrade a single endpoint (likely <code>/ws/chat</code>) to a token bucket <i>later</i>, and only if real traffic shows users' natural bursts are being wrongly blocked. Don't mix algorithms up front.</div>
+</div></section>
+
+<!-- DONE -->
+<section class="sec" id="done"><div class="wrap">
+  <div class="seclabel">Definition of done</div>
+  <h2>Task 2 is finished when…</h2>
+  <div class="check">
+    <div class="k">Done when</div>
+    <ul>
+      <li><b>2a —</b> the limiter uses Redis storage; the 4 auth limits hold across all 4 workers (verified by a concurrency test).</li>
+      <li><b>2b —</b> document uploads and <code>/ask-vision</code> carry limits, keyed by user/tenant; <code>change_password</code> re-keyed to user.</li>
+      <li><b>2c —</b> <code>/ws/chat</code> and <code>/ws/stt-fast</code> enforce a per-user message rate <i>and</i> a per-user connection cap.</li>
+      <li>Pre-login routes keyed by <b>IP</b>; logged-in routes and all sockets keyed by <b>user</b> (later <code>tenant_id</code>).</li>
+      <li>One algorithm throughout — <b>no per-endpoint algorithm mixing</b>; token bucket noted as a future, measure-first exception.</li>
+      <li>Quota layer (<code>usage_limiter.py</code>) left intact — frequency and volume stay as two separate guards.</li>
+    </ul>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Task 2 deep-dive · rate limiting · mapped to your FastAPI + WebSocket routes</div></footer>
+
+</body>
+</html>

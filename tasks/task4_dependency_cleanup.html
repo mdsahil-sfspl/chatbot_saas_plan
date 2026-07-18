@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 4 — Dependency Cleanup &amp; Docker Slimming</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1320; --panel:#141B2B; --panel2:#172033; --ink:#EAEEF6; --muted:#9AA6BC; --faint:#6E7A92;
+    --line:#222C40; --line2:#2C3650;
+    --green:#46C98B; --green-d:#1C7A53; --green-bg:#13261F;
+    --blue:#5B8DEF; --blue-bg:#142036; --blue-ln:#2A3E66;
+    --teal:#34C6C0; --teal-bg:#11272B;
+    --amber:#E0A537; --amber-bg:#2A2113; --amber-ln:#5A4413;
+    --red:#E5705F; --red-bg:#2A1715; --red-ln:#5A2A22;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+    --shadow:0 12px 34px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1000px 460px at 82% -8%,rgba(52,198,192,.10),transparent 60%),
+      radial-gradient(820px 460px at -8% 8%,rgba(224,165,55,.07),transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  code{font-family:var(--mono);font-size:.86em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .wrap{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 22px}
+  .topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-right:auto}
+  .topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+  .topnav a:hover{background:#1A2336;color:var(--ink)}
+
+  .hero{padding:60px 0 24px}
+  .kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;border:1px solid var(--teal);border-radius:30px;padding:5px 13px;background:var(--teal-bg)}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;margin:18px 0 14px}
+  h1 .g{background:linear-gradient(90deg,#34C6C0,#46C98B);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:18px;color:#C2CCDE;max-width:710px;margin:0}
+  .lede b{color:#fff}
+
+  .sec{padding:42px 0 4px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.3vw,29px);letter-spacing:-.01em;margin:8px 0 4px;color:#fff}
+  .sec .sub{color:var(--muted);margin:0;max-width:720px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px 24px;margin:18px 0}
+  .now{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;margin-top:4px}
+  .now .it{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#C7D2E6}
+  .now .it .b{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:11px;white-space:nowrap;margin-top:1px}
+  .b.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-d)}
+  .b.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
+  .b.bad{background:var(--red-bg);color:var(--red);border:1px solid var(--red-ln)}
+  .surprise{margin-top:16px;background:var(--amber-bg);border:1px solid var(--amber-ln);border-radius:11px;padding:13px 15px;font-size:14px;color:#EAD8A8}
+  .surprise b{color:#fff} .surprise .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);font-weight:600;display:block;margin-bottom:5px}
+
+  .figure{background:#0B1018;border:1px solid var(--line2);border-radius:14px;padding:16px;margin:14px 0}
+  .figure svg{display:block;width:100%;height:auto}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin:18px 0;overflow:hidden}
+  .card .head{padding:18px 22px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(52,198,192,.05),transparent)}
+  .card .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-weight:600;font-size:12px;color:#0E1320;background:var(--teal);padding:4px 10px;border-radius:9px}
+  .card h3{font-family:var(--disp);font-weight:600;font-size:19px;margin:0;color:#fff;letter-spacing:-.01em}
+  .meta{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:3px 10px}
+  .files{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+  .files .file{font-family:var(--mono);font-size:10.5px;color:#9FE3D0;background:var(--green-bg);border:1px solid var(--green-d);border-radius:6px;padding:3px 8px}
+  .body{padding:8px 22px 20px}
+  ol.steps{margin:6px 0 0;padding:0;list-style:none;counter-reset:st}
+  ol.steps>li{counter-increment:st;position:relative;padding:0 0 14px 32px;font-size:14.5px;color:#CAD4E6}
+  ol.steps>li::before{content:counter(st);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:7px;background:#1C2538;border:1px solid var(--line2);color:var(--teal);font-family:var(--mono);font-size:11px;font-weight:600;display:grid;place-items:center}
+  ol.steps>li b{color:#fff}
+
+  pre.code{margin:11px 0 2px;background:#0B1018;border:1px solid var(--line2);border-radius:11px;padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:12.2px;line-height:1.6;color:#D7E0F0}
+  pre.code .c{color:#5C7B6B} pre.code .k{color:#7FA6F0} pre.code .s{color:#8FD8B0} pre.code .f{color:#E0A537} pre.code .r{color:#E5705F}
+
+  .note{margin:12px 0 2px;border-radius:11px;padding:11px 14px;font-size:13.5px;line-height:1.55}
+  .note.tip{background:var(--blue-bg);border:1px solid var(--blue-ln);color:#C9D7F2}
+  .note .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px;color:var(--blue)}
+  .note b{color:#fff}
+
+  table{border-collapse:collapse;width:100%;font-size:12.8px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td.e{font-family:var(--mono);color:#A9C2F2}
+  .pill{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:11px}
+  .p-keep{background:var(--green-bg);color:var(--green)} .p-dev{background:var(--blue-bg);color:var(--blue)} .p-rm{background:var(--red-bg);color:var(--red)} .p-dd{background:var(--amber-bg);color:var(--amber)}
+
+  .check{background:linear-gradient(160deg,#101a2e,#0c1422);border:1px solid var(--line2);border-radius:18px;padding:24px 26px;margin:18px 0}
+  .check .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:12px}
+  .check ul{margin:0;padding:0;list-style:none}
+  .check li{position:relative;padding:7px 0 7px 30px;font-size:14px;color:#CAD4E6;border-top:1px solid var(--line)}
+  .check li:first-child{border-top:none}
+  .check li::before{content:"";position:absolute;left:2px;top:11px;width:13px;height:13px;border-radius:4px;border:1.5px solid var(--teal)}
+  .check b{color:#fff}
+
+  footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:26px}
+  @media(max-width:760px){.now{grid-template-columns:1fr}.meta{margin-left:0}.topnav a:nth-child(n+5){display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">Task 4 · Dependency Cleanup</span>
+  <a href="#now">Today</a>
+  <a href="#model">What's inside</a>
+  <a href="#do">What to do</a>
+  <a href="#table">Verdict table</a>
+  <a href="#done">Done when</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kchip">● Deep-dive · mapped to requirements.txt &amp; Dockerfile</span>
+  <h1>Task 4 — <span class="g">dependency cleanup &amp; Docker slimming</span></h1>
+  <p class="lede">Your image ships <b>282 pinned packages</b> — including a whole web framework you never import, a plotting library you never call, and <b>three copies of OpenCV</b> for code that imports <code>cv2</code> zero times. Here's exactly what to cut.</p>
+</div></header>
+
+<!-- TODAY -->
+<section class="sec" id="now"><div class="wrap">
+  <div class="seclabel">Where you are today</div>
+  <h2>What the audit found</h2>
+  <div class="panel">
+    <div class="now">
+      <div class="it"><span class="b bad">dupe</span><span><b style="color:#fff">3 OpenCV builds</b> — <code>contrib</code> 4.10, <code>python</code> 4.8, <code>headless</code> 4.13. They collide in one <code>cv2</code> namespace.</span></div>
+      <div class="it"><span class="b bad">dead</span><span><b style="color:#fff">Flask + Werkzeug + flask-babel</b> — a full web framework, <b>never imported</b> anywhere in your code.</span></div>
+      <div class="it"><span class="b bad">dead</span><span><b style="color:#fff">matplotlib</b> — pinned, but <b>never imported</b>. Pure weight.</span></div>
+      <div class="it"><span class="b warn">dev</span><span><b style="color:#fff">Dev/test tools in prod</b> — <code>pytest, mypy, bandit, pip_audit, schemathesis</code> shipped in the runtime image.</span></div>
+      <div class="it"><span class="b warn">risky</span><span><b style="color:#fff"><code>pip install --no-deps</code></b> — skips dependency resolution; one missing sub-dep = a runtime crash.</span></div>
+      <div class="it"><span class="b warn">build</span><span><b style="color:#fff">Single-stage build</b> — <code>build-essential</code> + dev headers stay in the shipped image.</span></div>
+      <div class="it"><span class="b ok">good</span><span><b style="color:#fff">Base image</b> is <code>python:3.11-slim-bookworm</code> and a <code>.dockerignore</code> exists — solid starting point.</span></div>
+      <div class="it"><span class="b ok">keep</span><span><b style="color:#fff">The heavy OCR stack</b> (paddleocr/paddlepaddle) is real — it's a feature, so keep it (or split it out later).</span></div>
+    </div>
+    <div class="surprise">
+      <span class="l">The tell that the list has drifted</span>
+      Your Python code imports <code>cv2</code> <b>zero times</b> — OpenCV is only pulled in indirectly by PaddleOCR. Yet you pin <b>three</b> OpenCV builds by hand. That's the fingerprint of a <code>pip freeze</code> that grew over time and was frozen with <code>--no-deps</code>. Cleaning it up is safe, and it pays back in <b>faster builds, smaller images, and fewer version clashes.</b>
+    </div>
+  </div>
+</div></section>
+
+<!-- WHAT'S INSIDE -->
+<section class="sec" id="model"><div class="wrap">
+  <div class="seclabel">The mental model</div>
+  <h2>Four buckets for every dependency</h2>
+  <p class="sub">Sort each package into one of four buckets. Everything below the green line is bloat you can remove, move, or dedupe.</p>
+  <div class="figure">
+    <svg viewBox="0 0 640 232" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four buckets: keep runtime packages, move dev tools to a dev file, remove unused Flask and matplotlib, and dedupe three OpenCV builds into one headless build.">
+      <rect x="20" y="14" width="600" height="46" rx="10" fill="#13261F" stroke="#1C7A53"/>
+      <text x="36" y="34" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#46C98B">KEEP · runtime</text>
+      <text x="36" y="50" font-family="Inter" font-size="11.5" fill="#C7D2E6">fastapi · uvicorn · asyncpg · redis · langchain · llamaindex · paddleocr · sarvam</text>
+      <rect x="20" y="66" width="600" height="46" rx="10" fill="#142036" stroke="#2A3E66"/>
+      <text x="36" y="86" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#5B8DEF">MOVE · to requirements-dev.txt</text>
+      <text x="36" y="102" font-family="Inter" font-size="11.5" fill="#C7D2E6">pytest · mypy · bandit · pip_audit · schemathesis</text>
+      <rect x="20" y="118" width="600" height="46" rx="10" fill="#2A1715" stroke="#5A2A22"/>
+      <text x="36" y="138" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#E5705F">REMOVE · never imported</text>
+      <text x="36" y="154" font-family="Inter" font-size="11.5" fill="#C7D2E6">Flask · Werkzeug · flask-babel · matplotlib</text>
+      <rect x="20" y="170" width="600" height="46" rx="10" fill="#2A2113" stroke="#5A4413"/>
+      <text x="36" y="190" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#E0A537">DEDUPE · three into one</text>
+      <text x="36" y="206" font-family="Inter" font-size="11.5" fill="#C7D2E6">opencv-contrib + opencv-python + opencv-headless  →  opencv-python-headless (×1)</text>
+    </svg>
+  </div>
+</div></section>
+
+<!-- WHAT TO DO -->
+<section class="sec" id="do"><div class="wrap">
+  <div class="seclabel">What to do · in order</div>
+  <h2>The four moves</h2>
+  <p class="sub">Start with the free wins (4a, 4b), then the structural fix (4c).</p>
+
+  <!-- 4a -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">4a</span><h3>Cut the dead weight &amp; the OpenCV triplet</h3><span class="meta">quick win · ~half a day</span></div>
+      <div class="files"><span class="file">requirements.txt</span><span class="file">Dockerfile (system libs)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Delete the unused packages</b> — verified absent from all imports: <code>Flask</code>, <code>Werkzeug</code>, <code>flask-babel</code>, <code>matplotlib</code> (double-check <code>babel</code> isn't used standalone before removing it).</li>
+        <li><b>Collapse OpenCV to one headless build.</b> The server has no GUI, and your code never imports <code>cv2</code> directly:
+          <pre class="code"><span class="c"># requirements.txt — remove these two:</span>
+<span class="r">opencv-contrib-python==4.10.0.84</span>
+<span class="r">opencv-python==4.8.1.78</span>
+<span class="c"># keep only:</span>
+opencv-python-headless==4.10.0.84</pre>
+        </li>
+        <li><b>Trim now-unneeded system libs</b> in the Dockerfile — the headless build drops the GUI stack, so you can usually remove <code>libgl1 libsm6 libxext6 libxrender-dev</code> (keep <code>ffmpeg</code>, <code>poppler-utils</code>, <code>libportaudio2</code>).</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 4b -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">4b</span><h3>Split dev tools out of the prod image</h3><span class="meta">quick win · ~2 hrs</span></div>
+      <div class="files"><span class="file">requirements.txt</span><span class="file">requirements-dev.txt (new)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Create <code>requirements-dev.txt</code></b> and move the test/lint tools there:
+          <pre class="code"><span class="c"># requirements-dev.txt — installed only in CI / locally</span>
+pytest==9.0.3
+mypy==1.20.1
+bandit==1.9.4
+pip_audit==2.10.0
+schemathesis==4.15.2</pre>
+        </li>
+        <li><b>Keep the prod image lean</b> — it installs <code>requirements.txt</code> only. CI installs both.</li>
+        <li><b>Wire the dev file into CI</b> (Task 8) so linting/tests still run — just not inside the shipped image.</li>
+      </ol>
+      <div class="note tip"><span class="l">Why it matters beyond size</span>Test/audit tooling in a production image is extra attack surface for zero runtime benefit. Shipping less code is shipping less risk.</div>
+    </div>
+  </div>
+
+  <!-- 4c -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">4c</span><h3>Fix the install strategy + go multi-stage</h3><span class="meta">structural · ~1.5 days</span></div>
+      <div class="files"><span class="file">Dockerfile</span><span class="file">requirements.in → requirements.txt (lockfile)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Replace <code>--no-deps</code> with a real lockfile.</b> Keep a short <code>requirements.in</code> of the packages you actually depend on, and compile a fully-pinned lock (pip-tools or <code>uv</code>). Now transitive deps resolve correctly and you can install normally.</li>
+        <li><b>Move compilers into a builder stage</b> so they never ship in the final image:
+          <pre class="code"><span class="c"># Dockerfile — multi-stage</span>
+<span class="k">FROM</span> python:3.11-slim-bookworm <span class="k">AS</span> builder
+<span class="k">RUN</span> apt-get update && apt-get install -y --no-install-recommends build-essential libpq-dev portaudio19-dev
+COPY requirements.txt .
+<span class="k">RUN</span> pip wheel --wheel-dir /wheels -r requirements.txt
+
+<span class="k">FROM</span> python:3.11-slim-bookworm
+<span class="k">RUN</span> apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 poppler-utils ffmpeg libportaudio2 curl && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /wheels /wheels
+<span class="k">RUN</span> pip install --no-cache-dir /wheels/*
+COPY . .</pre>
+        </li>
+        <li><b>Rebuild and compare</b> — note the image size before/after, and confirm the app boots and a smoke test passes.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 4d -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">4d</span><h3>Optional: split the OCR stack into its own image</h3><span class="meta">later · when it hurts</span></div>
+      <div class="files"><span class="file">Dockerfile.ocr (new)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>PaddleOCR + paddlepaddle + paddlex are the single heaviest thing</b> in the image (hundreds of MB). If OCR isn't on the hot path, move it to a separate worker image so the main API stays small and deploys fast.</li>
+        <li><b>Only do this once the size actually hurts</b> your deploys — don't add a second image before you feel the pain.</li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<!-- VERDICT TABLE -->
+<section class="sec" id="table"><div class="wrap">
+  <div class="seclabel">Reference</div>
+  <h2>Package verdict table</h2>
+  <table>
+    <thead><tr><th>Package(s)</th><th>Used in code?</th><th>Verdict</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td class="e">opencv-contrib-python · opencv-python</td><td><code>cv2</code> imported 0×</td><td><span class="pill p-dd">dedupe</span></td><td>remove — keep headless only</td></tr>
+      <tr><td class="e">opencv-python-headless</td><td>transitive (Paddle)</td><td><span class="pill p-keep">keep</span></td><td>the single build to keep</td></tr>
+      <tr><td class="e">Flask · Werkzeug · flask-babel</td><td>not imported</td><td><span class="pill p-rm">remove</span></td><td>delete (unused framework)</td></tr>
+      <tr><td class="e">matplotlib</td><td>not imported</td><td><span class="pill p-rm">remove</span></td><td>delete</td></tr>
+      <tr><td class="e">pytest · mypy · bandit · pip_audit · schemathesis</td><td>dev / CI only</td><td><span class="pill p-dev">move</span></td><td>→ requirements-dev.txt</td></tr>
+      <tr><td class="e">paddleocr · paddlepaddle · paddlex</td><td>OCR feature</td><td><span class="pill p-keep">keep</span></td><td>keep (split out later, 4d)</td></tr>
+      <tr><td class="e">build-essential + dev headers (apt)</td><td>build-time only</td><td><span class="pill p-dd">stage</span></td><td>move to builder stage</td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- DONE -->
+<section class="sec" id="done"><div class="wrap">
+  <div class="seclabel">Definition of done</div>
+  <h2>Task 4 is finished when…</h2>
+  <div class="check">
+    <div class="k">Done when</div>
+    <ul>
+      <li><b>4a —</b> a single <code>opencv-python-headless</code> remains; Flask/Werkzeug/flask-babel and matplotlib are gone; unused GUI system libs dropped from the Dockerfile.</li>
+      <li><b>4b —</b> dev/test tools live in <code>requirements-dev.txt</code>; the prod image installs runtime deps only.</li>
+      <li><b>4c —</b> <code>--no-deps</code> is replaced by a proper lockfile; the Dockerfile is multi-stage with no compilers in the final image.</li>
+      <li>The app boots and a smoke test passes; the image is <b>measurably smaller</b> and builds faster than before (record the numbers).</li>
+      <li>The heavy OCR stack is left working — trimmed, not broken. (Splitting it out, 4d, is optional and later.)</li>
+    </ul>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Task 4 deep-dive · dependency cleanup &amp; Docker slimming · mapped to requirements.txt &amp; Dockerfile</div></footer>
+
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 11 · Multi-Tenancy & Data Isolation — Sampurna</title>
+<style>
+  :root{
+    --bg:#0b0f17; --bg2:#0f1521; --card:#141b2b; --card2:#182135;
+    --line:#243149; --line2:#2e3d59;
+    --ink:#e8edf6; --mut:#9fb0c9; --dim:#6f819e;
+    --accent:#5b9dff; --accent2:#8b7bff;
+    --good:#39d98a; --warn:#ffbe4d; --bad:#ff6b6b;
+    --code:#0a0e16; --codeln:#1c2537;
+    --chipbg:#1b2540;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:linear-gradient(180deg,#0a0e16 0%,#0b0f17 100%);
+    color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.65; font-size:16px;
+  }
+  .wrap{max-width:960px; margin:0 auto; padding:48px 24px 96px}
+  header.hero{
+    border:1px solid var(--line); border-radius:20px; padding:34px 34px 30px;
+    background:radial-gradient(120% 140% at 0% 0%, #17223a 0%, #10182700 60%), var(--card);
+    margin-bottom:34px;
+  }
+  .kicker{display:inline-flex; align-items:center; gap:8px; font-size:12.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:14px;
+    background:var(--chipbg); border:1px solid var(--line2); padding:6px 12px; border-radius:999px;}
+  h1{font-size:30px; margin:6px 0 10px; line-height:1.2; letter-spacing:-.02em}
+  h1 .sub{color:var(--mut); font-weight:600}
+  .lede{color:var(--mut); font-size:16.5px; margin:0}
+  .meta{display:flex; flex-wrap:wrap; gap:10px; margin-top:22px}
+  .pill{font-size:12.5px; color:var(--ink); background:var(--card2); border:1px solid var(--line2);
+    border-radius:999px; padding:6px 13px}
+  .pill b{color:var(--accent)}
+  .pill.crit{border-color:#5a2130; background:#241018; color:#ffb4b4}
+  .pill.crit b{color:var(--bad)}
+
+  h2{font-size:22px; margin:44px 0 6px; letter-spacing:-.01em; display:flex; align-items:center; gap:12px}
+  h2 .n{display:inline-grid; place-items:center; width:30px; height:30px; border-radius:9px;
+    background:linear-gradient(140deg,var(--accent),var(--accent2)); color:#0a0e16; font-size:15px; font-weight:800; flex:none}
+  h3{font-size:17px; margin:26px 0 8px}
+  .section-lede{color:var(--mut); margin-top:2px}
+
+  p{margin:12px 0}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px 24px; margin:18px 0}
+  .card.tight{padding:18px 20px}
+  .analogy{background:linear-gradient(180deg,#161f33,#131a29); border:1px solid var(--line2); border-left:3px solid var(--accent2);
+    border-radius:12px; padding:16px 20px; margin:16px 0; color:#dce6f6}
+  .analogy .t{font-weight:700; color:#c9b9ff; font-size:13px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px}
+
+  .callout{border-radius:12px; padding:15px 18px; margin:16px 0; border:1px solid; display:flex; gap:13px}
+  .callout .ic{font-size:18px; line-height:1.4; flex:none}
+  .callout.good{background:#0f2018; border-color:#1f5a3c; color:#c7f5df}
+  .callout.warn{background:#211a0d; border-color:#5a4620; color:#ffe6b4}
+  .callout.bad{background:#241014; border-color:#5a2130; color:#ffc9c9}
+  .callout b{color:#fff}
+
+  code.inl{background:#0d1420; border:1px solid var(--line); border-radius:6px; padding:1.5px 6px; font-size:13.5px;
+    color:#a9c7ff; font-family:"SF Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace}
+  pre{background:var(--code); border:1px solid var(--codeln); border-radius:12px; padding:16px 18px; overflow-x:auto;
+    font-size:13px; line-height:1.6; margin:14px 0}
+  pre code{font-family:"SF Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace; color:#cdd9ee}
+  .c-key{color:#c792ea} .c-fn{color:#82aaff} .c-str{color:#c3e88d} .c-com{color:#5a6b86; font-style:italic}
+  .c-num{color:#f78c6c} .c-var{color:#eeffff} .c-cls{color:#ffcb6b}
+  .filepath{font-family:"SF Mono",ui-monospace,monospace; font-size:12.5px; color:var(--dim);
+    background:#0d1420; border:1px solid var(--line); border-radius:6px; padding:3px 9px; display:inline-block; margin:2px 0}
+
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:14px}
+  th,td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{color:var(--dim); font-size:12px; letter-spacing:.06em; text-transform:uppercase; font-weight:700}
+  tbody tr:hover{background:#111a2b}
+  td code{font-size:12.5px}
+  .tag{display:inline-block; font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .tag.build{background:#1a2b1e; color:#8fe6b4; border:1px solid #2a5a3a}
+  .tag.wire{background:#1a233b; color:#9bbcff; border:1px solid #2e4a7a}
+  .tag.fix{background:#301620; color:#ff9db0; border:1px solid #5a2838}
+  .tag.keep{background:#22283a; color:#b8c4dd; border:1px solid #384463}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .mini{background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:16px 18px}
+  .mini h4{margin:0 0 6px; font-size:14px; color:var(--accent)}
+  .mini.bad h4{color:var(--bad)} .mini.good h4{color:var(--good)}
+  .mini p{margin:4px 0; font-size:14px; color:var(--mut)}
+
+  .steps{counter-reset:s; list-style:none; padding:0; margin:14px 0}
+  .steps li{position:relative; padding:14px 16px 14px 56px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; margin:10px 0}
+  .steps li::before{counter-increment:s; content:counter(s); position:absolute; left:14px; top:14px;
+    width:28px; height:28px; border-radius:8px; background:linear-gradient(140deg,var(--accent),var(--accent2));
+    color:#0a0e16; font-weight:800; display:grid; place-items:center; font-size:14px}
+  .steps li b{color:#fff}
+  .steps .d{color:var(--mut); font-size:14px; margin-top:3px}
+
+  .check{list-style:none; padding:0; margin:12px 0}
+  .check li{padding:9px 0 9px 34px; position:relative; border-bottom:1px solid var(--line); color:var(--mut)}
+  .check li::before{content:"☐"; position:absolute; left:4px; top:8px; color:var(--accent); font-size:18px}
+  .check li b{color:var(--ink)}
+
+  .flow{display:flex; flex-wrap:wrap; align-items:stretch; gap:10px; margin:18px 0}
+  .flow .box{flex:1; min-width:130px; background:var(--card2); border:1px solid var(--line2); border-radius:12px;
+    padding:13px 14px; font-size:13px; color:var(--ink)}
+  .flow .box .lab{font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px}
+  .flow .arr{display:grid; place-items:center; color:var(--accent2); font-size:20px; flex:none}
+  @media(max-width:720px){.flow{flex-direction:column} .flow .arr{transform:rotate(90deg)}}
+
+  .divider{height:1px; background:linear-gradient(90deg,transparent,var(--line2),transparent); margin:40px 0}
+  footer{color:var(--dim); font-size:13px; text-align:center; margin-top:50px; border-top:1px solid var(--line); padding-top:22px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="kicker">◆ Task 11 · Critical Path</span>
+    <h1>Multi-Tenancy &amp; Data Isolation<br><span class="sub">Option 3 — a separate database per client</span></h1>
+    <p class="lede">Make one codebase safely serve many customers, where each customer can only ever see their own data — grounded in your real 46-table schema and your actual connection code.</p>
+    <div class="meta">
+      <span class="pill"><b>Owner</b> &nbsp;Dev A + Dev B + Dev D</span>
+      <span class="pill"><b>Effort</b> &nbsp;~14 days</span>
+      <span class="pill"><b>Depends on</b> &nbsp;Task 8</span>
+      <span class="pill crit"><b>Risk</b> &nbsp;A mistake = cross-customer data leak</span>
+    </div>
+  </header>
+
+  <!-- ============ THE REFRAME ============ -->
+  <div class="callout good">
+    <div class="ic">✅</div>
+    <div><b>The most important thing first:</b> because you chose <b>database-per-tenant</b>, the scary part of this task — <i>"rewrite every query to add a tenant filter"</i> — mostly disappears. Your data tables don't need a <code class="inl">tenant_id</code> column and you don't need row-level security on them. Isolation is physical: each customer's data lives in its own database. Task 11 becomes <b>three focused moves</b>, not a rewrite of your whole data layer.</div>
+  </div>
+
+  <div class="analogy">
+    <div class="t">The picture in plain language</div>
+    Think of the generic multi-tenant approach as a <b>shared hostel</b>: everyone sleeps in one big room, and you rely on discipline — a name tag (<code class="inl">tenant_id</code>) on every bag and a warden (RLS) at the door — so nobody grabs someone else's things. It works, but one slip and a stranger walks off with your bag.<br><br>
+    Your Option 3 is <b>separate houses</b>: each customer gets their own house (their own database) with its own lock. There are no name tags on the furniture because nobody else is ever in the house. All you need is a <b>reliable way to walk the right customer to the right front door</b> on every request — and to make sure no back door was left open.
+  </div>
+
+  <!-- ============ SECTION 1: WHAT YOU ALREADY HAVE ============ -->
+  <h2><span class="n">1</span>What your schema already gives you</h2>
+  <p class="section-lede">I read <span class="filepath">copy_of_chatbot_platform_schema_only.sql</span> — 46 tables. You've already built the hardest structural piece: the tenant registry. This isn't a from-scratch build.</p>
+
+  <div class="card tight">
+    <table>
+      <thead><tr><th>Table</th><th>What it holds (from your real columns)</th><th>Role in Task 11</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code class="inl">clients</code></td>
+          <td><code>subdomain</code>, <code>custom_domain</code>, <code>plan</code>, <code>status</code>, <code>id (uuid)</code></td>
+          <td>The <b>guest list</b> — turns an incoming request into a tenant identity</td>
+        </tr>
+        <tr>
+          <td><code class="inl">client_servers</code></td>
+          <td><code>db_host</code>, <code>db_port</code>, <code>db_name</code>, <code>db_user</code>, <code>db_password</code>, <code>server_url</code></td>
+          <td>The <b>phonebook</b> — the exact address &amp; key to each customer's house (database)</td>
+        </tr>
+        <tr>
+          <td><code class="inl">client_config</code></td>
+          <td>per-client <code>llm_provider/model/key</code>, <code>stt_*</code>, <code>tts_*</code>, feature flags, quotas</td>
+          <td>Per-tenant behaviour &amp; AI settings</td>
+        </tr>
+        <tr>
+          <td><code class="inl">billing</code>, <code>usage_logs</code>, <code>audit_log</code>, <code>client_api_key_history</code></td>
+          <td>All carry <code>client_id</code> &amp; FK to <code>clients</code></td>
+          <td>Control-plane records, correctly scoped by client</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout good">
+    <div class="ic">🔎</div>
+    <div><b>Key evidence that Option 3 is already your design:</b> I searched every table for a <code class="inl">client_id</code> / <code class="inl">tenant_id</code> column. It appears <b>only</b> in the control-plane tables above. Your data tables — <code class="inl">chatbots</code>, <code class="inl">it_documents_v2</code>, <code class="inl">hr_documents_v2</code>, <code class="inl">conversation_details</code>, <code class="inl">user_credentials</code>, <code class="inl">system_settings</code> — have <b>no tenant column at all</b>. That's exactly right for database-per-tenant, and it's why the "query rewrite" half of this task doesn't apply to you.</div>
+  </div>
+
+  <h3>How your 46 tables split across the two database types</h3>
+  <div class="grid2">
+    <div class="mini good">
+      <h4>Central "control" database (one, shared)</h4>
+      <p><code>clients</code>, <code>client_servers</code>, <code>client_config</code>, <code>client_api_key_history</code>, <code>client_provision_log</code>, <code>billing</code>, <code>usage_logs</code>, <code>master_admins</code>, <code>master_sessions</code>, <code>master_settings</code>, <code>plan_defaults</code>, <code>llm_providers</code>, <code>voice_providers</code>, <code>sarvam_pricing</code></p>
+    </div>
+    <div class="mini">
+      <h4>Per-client database (one per customer)</h4>
+      <p><code>chatbots</code>, <code>chatbot_prompts</code>, <code>*_documents_v2</code>, <code>ops_documents</code>, <code>department_documents</code>, <code>uploaded_files</code>, <code>conversation_details</code>, <code>conversation_summaries</code>, <code>conversation_feedback</code>, <code>user_credentials</code>, <code>session_*</code>, <code>system_settings</code>, <code>audit_log</code>, the <code>admin_*</code> tables</p>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 2: THE REAL SCOPE ============ -->
+  <h2><span class="n">2</span>The real scope — three moves</h2>
+  <p class="section-lede">Everything in Task 11 collapses into these three, plus one security fix that this task exposes.</p>
+
+  <div class="flow">
+    <div class="box"><div class="lab">Move A</div><b>Resolve the tenant</b><br>middleware reads subdomain → looks up the phonebook</div>
+    <div class="arr">→</div>
+    <div class="box"><div class="lab">Move B</div><b>Route the connection</b><br><code>get_pool()</code> opens the right database, cached per tenant</div>
+    <div class="arr">→</div>
+    <div class="box"><div class="lab">Move C</div><b>Close the back door</b><br>reroute the direct-connect bypass through the pool</div>
+  </div>
+
+  <!-- MOVE A -->
+  <h3>Move A · Tenant-resolution middleware</h3>
+  <p><b>Where:</b> <span class="filepath">api/middleware/tenant.py</span> (new file) + register in <span class="filepath">main.py</span></p>
+  <p><b>What it does:</b> On every request, figure out <i>which customer this is</i> (from the subdomain, e.g. <code class="inl">acme.sampurna.app</code>), look them up in <code class="inl">clients</code> + <code class="inl">client_servers</code>, and stash the answer where the rest of the app can read it — a <code class="inl">ContextVar</code>. A ContextVar is request-local: two customers hitting the server at the same time never see each other's value.</p>
+
+<pre><code><span class="c-com"># api/middleware/tenant.py  (new)</span>
+<span class="c-key">import</span> contextvars
+<span class="c-key">from</span> fastapi <span class="c-key">import</span> Request, HTTPException
+
+<span class="c-com"># request-local slot — safe under concurrency</span>
+current_tenant: contextvars.ContextVar = contextvars.ContextVar(<span class="c-str">"current_tenant"</span>, default=<span class="c-key">None</span>)
+
+<span class="c-key">async def</span> <span class="c-fn">resolve_tenant</span>(request: Request, call_next):
+    host = request.headers.get(<span class="c-str">"host"</span>, <span class="c-str">""</span>).split(<span class="c-str">":"</span>)[<span class="c-num">0</span>]
+    subdomain = host.split(<span class="c-str">"."</span>)[<span class="c-num">0</span>]           <span class="c-com"># acme.sampurna.app -> "acme"</span>
+
+    <span class="c-com"># one lookup against the CENTRAL control DB (clients + client_servers)</span>
+    tenant = <span class="c-key">await</span> <span class="c-fn">load_tenant_from_registry</span>(subdomain)
+    <span class="c-key">if</span> tenant <span class="c-key">is</span> <span class="c-key">None</span> <span class="c-key">or</span> tenant[<span class="c-str">"status"</span>] == <span class="c-str">"suspended"</span>:
+        <span class="c-key">raise</span> <span class="c-cls">HTTPException</span>(<span class="c-num">404</span>, <span class="c-str">"Unknown or suspended tenant"</span>)
+
+    token = current_tenant.<span class="c-fn">set</span>(tenant)      <span class="c-com"># bind for THIS request only</span>
+    <span class="c-key">try</span>:
+        <span class="c-key">return</span> <span class="c-key">await</span> <span class="c-fn">call_next</span>(request)
+    <span class="c-key">finally</span>:
+        current_tenant.<span class="c-fn">reset</span>(token)          <span class="c-com"># always release the slot</span>
+</code></pre>
+
+  <div class="callout warn">
+    <div class="ic">⚡</div>
+    <div><b>Cache the registry lookup.</b> Don't hit the control DB on every single request — wrap <code class="inl">load_tenant_from_registry</code> in a small TTL cache (e.g. 30–60s) keyed by subdomain, and bust it when onboarding writes a new row. Otherwise your control DB becomes the bottleneck for every tenant.</div>
+  </div>
+
+  <!-- MOVE B -->
+  <h3>Move B · Make <code class="inl">get_pool()</code> tenant-aware</h3>
+  <p><b>Where:</b> <span class="filepath">core/db_client.py</span> — this is the heart of the change.</p>
+  <p><b>Today (single-tenant):</b> there is <b>one</b> global asyncpg pool built from a single <code class="inl">DATABASE_URL</code>. Every query in the app goes through it, so everyone would share one database. <b>The fix:</b> keep a <b>dictionary of pools</b> — one per tenant database — and hand back the pool that matches whoever the middleware resolved.</p>
+
+<pre><code><span class="c-com"># core/db_client.py  (evolve the existing get_pool)</span>
+<span class="c-key">import</span> asyncpg
+<span class="c-key">from</span> api.middleware.tenant <span class="c-key">import</span> current_tenant
+
+_pools: dict[str, asyncpg.<span class="c-cls">Pool</span>] = {}     <span class="c-com"># db_name -> pool, one per house</span>
+
+<span class="c-key">async def</span> <span class="c-fn">get_pool</span>() -> asyncpg.<span class="c-cls">Pool</span>:
+    tenant = current_tenant.<span class="c-fn">get</span>()
+    <span class="c-key">if</span> tenant <span class="c-key">is</span> <span class="c-key">None</span>:
+        <span class="c-key">raise</span> <span class="c-cls">RuntimeError</span>(<span class="c-str">"No tenant in context — refusing to open a DB connection"</span>)
+
+    key = tenant[<span class="c-str">"db_name"</span>]
+    <span class="c-key">if</span> key <span class="c-key">not in</span> _pools:
+        _pools[key] = <span class="c-key">await</span> asyncpg.<span class="c-fn">create_pool</span>(
+            host=tenant[<span class="c-str">"db_host"</span>], port=tenant[<span class="c-str">"db_port"</span>],
+            database=tenant[<span class="c-str">"db_name"</span>], user=tenant[<span class="c-str">"db_user"</span>],
+            password=<span class="c-fn">decrypt</span>(tenant[<span class="c-str">"db_password"</span>]),   <span class="c-com"># see Section 3</span>
+            min_size=<span class="c-num">1</span>, max_size=<span class="c-num">8</span>,
+        )
+    <span class="c-key">return</span> _pools[key]
+</code></pre>
+
+  <div class="callout good">
+    <div class="ic">🎯</div>
+    <div><b>This is the whole trick.</b> Because every data query already calls <code class="inl">get_pool()</code>, changing <i>this one function</i> re-points your <b>entire</b> data layer at the correct customer database — with <b>zero changes to your query code</b>. That "fail closed if no tenant" guard on line 10 is your safety net: any code path that forgot to set a tenant crashes loudly instead of silently querying the wrong house.</div>
+  </div>
+
+  <div class="callout warn">
+    <div class="ic">🧮</div>
+    <div><b>Watch the pool math.</b> <code class="inl">max_size=8</code> per tenant × N tenants × app workers can blow past Postgres's <code class="inl">max_connections</code>. For tens of clients this is fine on separate DB servers. When it grows, cap it — evict idle tenant pools (LRU) or front everything with PgBouncer. This ceiling is one of the reasons Option 3 is a "tens of clients" design, not a "hundreds" design (see Section 5).</div>
+  </div>
+
+  <!-- MOVE C -->
+  <h3>Move C · Close the back door — the direct-connect bypass</h3>
+  <p><b>Where:</b> <span class="filepath">contextual_chunking.py</span> → <code class="inl">_get_conn()</code></p>
+  <p>Last session we found this: one module opens its own connection with a raw <code class="inl">asyncpg.connect(...)</code> instead of going through <code class="inl">get_pool()</code>. In single-tenant that's harmless. In multi-tenant it's the <b>single most dangerous line in the codebase</b> — it's a door into a house that ignores the phonebook, so it can read or write the <i>wrong</i> customer's documents during ingestion.</p>
+
+  <div class="callout bad">
+    <div class="ic">🚨</div>
+    <div><b>Every</b> connection must flow through the tenant-aware <code class="inl">get_pool()</code>. Reroute <code class="inl">_get_conn()</code> to <code class="inl">async with (await get_pool()).acquire() as conn:</code> and delete its private <code class="inl">asyncpg.connect</code>. Then add a CI grep that <b>fails the build</b> if <code class="inl">asyncpg.connect</code> reappears anywhere outside <code class="inl">db_client.py</code> and the onboarding script.</div>
+  </div>
+
+<pre><code><span class="c-com"># CI guardrail — add to your test/lint step</span>
+<span class="c-com"># fails if any file (except the two allowed) opens a raw connection</span>
+grep -rn <span class="c-str">"asyncpg.connect"</span> --include=<span class="c-str">"*.py"</span> . \
+  | grep -vE <span class="c-str">"core/db_client.py|onboarding|create_tenant"</span> \
+  && echo <span class="c-str">"BLOCKED: raw connection outside the pool"</span> && exit <span class="c-num">1</span>
+</code></pre>
+
+  <!-- ============ SECTION 3: SECURITY FIX ============ -->
+  <h2><span class="n">3</span>The security fix this task exposes</h2>
+  <p class="section-lede">Task 11 makes the registry load-bearing — so the fact that it stores secrets in plaintext becomes urgent, not cosmetic.</p>
+
+  <div class="callout bad">
+    <div class="ic">🔓</div>
+    <div><b>Confirmed in your schema — these columns are plaintext <code class="inl">text</code>:</b><br>
+    &nbsp;&nbsp;• <code class="inl">client_servers.db_password</code> — the password to every customer database<br>
+    &nbsp;&nbsp;• <code class="inl">client_servers.api_key</code> and <code class="inl">client_api_key_history.api_key</code><br>
+    &nbsp;&nbsp;• <code class="inl">client_config.llm_api_key</code>, <code class="inl">stt_api_key</code>, <code class="inl">tts_api_key</code> — each customer's paid AI keys<br>
+    Right now, anyone who reads one table (a backup leak, a SQL-injection, a curious admin) gets the keys to <b>every</b> customer's database and AI billing. Under DPDP this is a reportable breach.</div>
+  </div>
+
+  <table>
+    <thead><tr><th>What</th><th>Where</th><th>How to fix</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>DB passwords &amp; API keys in plaintext</td>
+        <td><code class="inl">client_servers</code>, <code class="inl">client_config</code>, <code class="inl">client_api_key_history</code></td>
+        <td>Encrypt at rest with an app-held key (Fernet / libsodium), <b>or better</b> store secrets in <b>Azure Key Vault</b> and keep only a reference in the row. The <code class="inl">decrypt()</code> call in Move B is where this plugs in.</td>
+      </tr>
+      <tr>
+        <td>Onboarding role too powerful for request path</td>
+        <td>per-tenant app connections</td>
+        <td>Request-path connections use a <b>limited</b> Postgres role (read/write data only). <code class="inl">CREATE DATABASE</code> lives only in the onboarding routine, with its admin credential in Key Vault.</td>
+      </tr>
+      <tr>
+        <td>Verify user passwords aren't plaintext</td>
+        <td><code class="inl">user_credentials.password</code></td>
+        <td>Column is named <code class="inl">password</code> — confirm it holds a bcrypt/argon2 <b>hash</b>, not the raw password. If raw, fix before launch.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="ic">🧹</div>
+    <div><b>Schema hygiene note (unrelated but worth logging):</b> your dump defines <code class="inl">client_config</code> <b>twice</b> (lines 169 and 1716) with different columns — one is the AI-settings table, the other looks like a mislabelled settings table. Reconcile this so migrations don't collide.</div>
+  </div>
+
+  <!-- ============ SECTION 4: WHAT YOU DON'T NEED ============ -->
+  <h2><span class="n">4</span>What you deliberately do <i>not</i> do</h2>
+  <p class="section-lede">This is where Option 3 saves you weeks — and where a well-meaning dev could waste them. Say this out loud to the team.</p>
+
+  <div class="grid2">
+    <div class="mini bad">
+      <h4>✗ Don't add <code>tenant_id</code> to data tables</h4>
+      <p>No <code>ALTER TABLE ... ADD COLUMN tenant_id</code> on <code>documents</code>, <code>chatbots</code>, <code>conversations</code>. Separate databases already isolate them. Adding it would be dead weight and a false sense of "extra safety."</p>
+    </div>
+    <div class="mini bad">
+      <h4>✗ Don't enable RLS on data tables</h4>
+      <p>Row-level security is the tool for the <i>shared-tables</i> model. With one database per customer there are no other tenants' rows to hide, so RLS policies would guard nothing.</p>
+    </div>
+    <div class="mini bad">
+      <h4>✗ Don't rewrite your queries</h4>
+      <p>You do <b>not</b> touch your 138 endpoints to bolt a tenant filter onto each query. The routing happens once, in <code>get_pool()</code>.</p>
+    </div>
+    <div class="mini good">
+      <h4>✓ Do scope the non-DB stuff</h4>
+      <p>Redis keys, rate-limit keys, and file/upload paths <b>must</b> still be prefixed by tenant (e.g. <code>acme:uploads/...</code>). Those don't get physical separation for free the way the database does.</p>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 5: HONEST TRADEOFF ============ -->
+  <h2><span class="n">5</span>Honest pushback — where this design ends</h2>
+  <div class="card">
+    <p>Option 3 is the <b>right call for you now</b>, but be clear-eyed about two things so nobody's surprised in a year:</p>
+    <p><b>1. It's a "tens of clients" design, not "hundreds."</b> Every new customer is a new database to migrate, back up, monitor, and connection-pool. At ~10–30 clients that's very manageable. Past ~100, the operational and connection overhead pushes you toward <b>shared tables + <code class="inl">tenant_id</code> + RLS</b> — that's the future migration, and it's exactly the "add tenant_id + RLS" work you're <i>skipping</i> today. Track it, don't build it early.</p>
+    <p><b>2. The one real failure mode is a routing bug.</b> Physical isolation is strong, but it all hinges on the ContextVar being set correctly on every path. A forgotten tenant, a leaked connection, or a reappearing raw <code class="inl">asyncpg.connect</code> can hand one customer another's <i>entire</i> database — worse than a single leaked row. That's why the "fail closed" guard and the CI grep in Section 2 aren't optional polish; they're the safety system for the whole design.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ============ SECTION 6: PROCESS / IMPORTANCE ============ -->
+  <h2><span class="n">6</span>Process — the order to do it in</h2>
+  <ol class="steps">
+    <li><b>Split the control plane out first.</b> <div class="d">Confirm the central DB (clients / client_servers / client_config / billing / usage_logs) can be reached independently of any tenant DB. The middleware reads from here.</div></li>
+    <li><b>Encrypt the credentials (Section 3) before wiring routing.</b> <div class="d">Do this first so the <code class="inl">decrypt()</code> seam exists when <code class="inl">get_pool()</code> needs it — and so you never ship a build that reads plaintext keys in the new hot path.</div></li>
+    <li><b>Build Move A (middleware + ContextVar).</b> <div class="d">Add the TTL cache for the registry lookup. Test that a bad/suspended subdomain 404s.</div></li>
+    <li><b>Evolve Move B (<code class="inl">get_pool()</code> → per-tenant pool cache).</b> <div class="d">Include the "no tenant → refuse" guard. Verify two subdomains hit two different databases.</div></li>
+    <li><b>Do Move C (close the <code class="inl">_get_conn()</code> bypass) + add the CI grep.</b> <div class="d">Nothing merges after this without going through the pool.</div></li>
+    <li><b>Scope Redis / rate-limit / file paths by tenant.</b></li>
+    <li><b>Write the isolation test.</b> <div class="d">Seed two tenants, log in as one, assert you cannot read the other's documents/conversations through any endpoint. This is your "done" gate.</div></li>
+  </ol>
+
+  <h3>Importance &amp; risk at a glance</h3>
+  <div class="card tight">
+    <table>
+      <thead><tr><th>Move</th><th>Type</th><th>Effort</th><th>If skipped / done wrong</th></tr></thead>
+      <tbody>
+        <tr><td>Encrypt credentials</td><td><span class="tag fix">Fix</span></td><td>2–3d</td><td>One backup leak exposes every customer's DB + AI keys — DPDP breach</td></tr>
+        <tr><td>Tenant middleware</td><td><span class="tag wire">Wire</span></td><td>2–3d</td><td>App has no idea who the caller is — nothing else works</td></tr>
+        <tr><td>Tenant-aware <code>get_pool()</code></td><td><span class="tag wire">Wire</span></td><td>3–4d</td><td>Everyone shares one DB — total isolation failure</td></tr>
+        <tr><td>Close <code>_get_conn()</code> bypass</td><td><span class="tag fix">Fix</span></td><td>1d</td><td>Ingestion writes/reads the wrong customer's data silently</td></tr>
+        <tr><td>Scope Redis / files</td><td><span class="tag wire">Wire</span></td><td>2d</td><td>Cross-tenant cache hits &amp; file access despite DB isolation</td></tr>
+        <tr><td>Registry (clients / client_servers)</td><td><span class="tag keep">Already built</span></td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ DONE WHEN ============ -->
+  <h2><span class="n">✓</span>Done when</h2>
+  <ul class="check">
+    <li><b>No query path can return another tenant's data</b> — proven by the two-tenant isolation test, not just by inspection</li>
+    <li><b>Every</b> connection flows through the tenant-aware <code class="inl">get_pool()</code>; the CI grep blocks any raw <code class="inl">asyncpg.connect</code></li>
+    <li><code class="inl">get_pool()</code> <b>fails closed</b> when no tenant is in context</li>
+    <li>DB passwords &amp; AI keys are <b>encrypted at rest</b> (or in Key Vault) — no plaintext secrets remain in <code class="inl">client_servers</code> / <code class="inl">client_config</code></li>
+    <li>Redis keys, rate-limit keys, and file paths are <b>prefixed by tenant</b></li>
+    <li>Request-path Postgres role <b>cannot</b> <code class="inl">CREATE</code>/<code class="inl">DROP DATABASE</code></li>
+  </ul>
+
+  <footer>
+    Task 11 · Multi-Tenancy &amp; Data Isolation (Option 3) — grounded in your 46-table schema &amp; connection layer.<br>
+    Next dependency in the chain: this unblocks Task 12-style query work only <i>if</i> you later migrate to shared tables at scale.
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 5 — Proxy &amp; Security Lockdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1320; --panel:#141B2B; --panel2:#172033; --ink:#EAEEF6; --muted:#9AA6BC; --faint:#6E7A92;
+    --line:#222C40; --line2:#2C3650;
+    --green:#46C98B; --green-d:#1C7A53; --green-bg:#13261F;
+    --blue:#5B8DEF; --blue-bg:#142036; --blue-ln:#2A3E66;
+    --teal:#34C6C0; --teal-bg:#11272B;
+    --amber:#E0A537; --amber-bg:#2A2113; --amber-ln:#5A4413;
+    --red:#E5705F; --red-bg:#2A1715; --red-ln:#5A2A22;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+    --shadow:0 12px 34px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1000px 460px at 82% -8%,rgba(229,112,95,.09),transparent 60%),
+      radial-gradient(820px 460px at -8% 8%,rgba(52,198,192,.08),transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  code{font-family:var(--mono);font-size:.86em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .wrap{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 22px}
+  .topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-right:auto}
+  .topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+  .topnav a:hover{background:#1A2336;color:var(--ink)}
+
+  .hero{padding:60px 0 24px}
+  .kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;border:1px solid var(--teal);border-radius:30px;padding:5px 13px;background:var(--teal-bg)}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;margin:18px 0 14px}
+  h1 .g{background:linear-gradient(90deg,#E5705F,#E0A537);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:18px;color:#C2CCDE;max-width:710px;margin:0}
+  .lede b{color:#fff}
+
+  .sec{padding:42px 0 4px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.3vw,29px);letter-spacing:-.01em;margin:8px 0 4px;color:#fff}
+  .sec .sub{color:var(--muted);margin:0;max-width:720px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px 24px;margin:18px 0}
+  .now{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;margin-top:4px}
+  .now .it{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#C7D2E6}
+  .now .it .b{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:11px;white-space:nowrap;margin-top:1px}
+  .b.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-d)}
+  .b.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
+  .b.bad{background:var(--red-bg);color:var(--red);border:1px solid var(--red-ln)}
+  .surprise{margin-top:16px;background:var(--red-bg);border:1px solid var(--red-ln);border-radius:11px;padding:13px 15px;font-size:14px;color:#F2C9C1}
+  .surprise b{color:#fff} .surprise .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);font-weight:600;display:block;margin-bottom:5px}
+
+  .figure{background:#0B1018;border:1px solid var(--line2);border-radius:14px;padding:16px;margin:14px 0}
+  .figure svg{display:block;width:100%;height:auto}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin:18px 0;overflow:hidden}
+  .card .head{padding:18px 22px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(91,141,239,.05),transparent)}
+  .card.r .head{background:linear-gradient(180deg,rgba(229,112,95,.06),transparent)}
+  .card .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-weight:600;font-size:12px;color:#0E1320;background:var(--teal);padding:4px 10px;border-radius:9px}
+  .card.r .tag{background:var(--red)}
+  .card h3{font-family:var(--disp);font-weight:600;font-size:19px;margin:0;color:#fff;letter-spacing:-.01em}
+  .meta{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:3px 10px}
+  .files{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+  .files .file{font-family:var(--mono);font-size:10.5px;color:#9FE3D0;background:var(--green-bg);border:1px solid var(--green-d);border-radius:6px;padding:3px 8px}
+  .body{padding:8px 22px 20px}
+  ol.steps{margin:6px 0 0;padding:0;list-style:none;counter-reset:st}
+  ol.steps>li{counter-increment:st;position:relative;padding:0 0 14px 32px;font-size:14.5px;color:#CAD4E6}
+  ol.steps>li::before{content:counter(st);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:7px;background:#1C2538;border:1px solid var(--line2);color:var(--teal);font-family:var(--mono);font-size:11px;font-weight:600;display:grid;place-items:center}
+  ol.steps>li b{color:#fff}
+
+  pre.code{margin:11px 0 2px;background:#0B1018;border:1px solid var(--line2);border-radius:11px;padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:12.4px;line-height:1.65;color:#D7E0F0}
+  pre.code .c{color:#5C7B6B} pre.code .k{color:#7FA6F0} pre.code .s{color:#8FD8B0} pre.code .f{color:#E0A537} pre.code .r{color:#E5705F}
+
+  .note{margin:12px 0 2px;border-radius:11px;padding:11px 14px;font-size:13.5px;line-height:1.55}
+  .note.tip{background:var(--blue-bg);border:1px solid var(--blue-ln);color:#C9D7F2}
+  .note .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px;color:var(--blue)}
+  .note b{color:#fff}
+
+  table{border-collapse:collapse;width:100%;font-size:12.8px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td.e{font-family:var(--mono);color:#A9C2F2}
+  .pill{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:11px}
+  .p-good{background:var(--green-bg);color:var(--green)} .p-mid{background:var(--amber-bg);color:var(--amber)} .p-bad{background:var(--red-bg);color:var(--red)}
+
+  .check{background:linear-gradient(160deg,#101a2e,#0c1422);border:1px solid var(--line2);border-radius:18px;padding:24px 26px;margin:18px 0}
+  .check .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:12px}
+  .check ul{margin:0;padding:0;list-style:none}
+  .check li{position:relative;padding:7px 0 7px 30px;font-size:14px;color:#CAD4E6;border-top:1px solid var(--line)}
+  .check li:first-child{border-top:none}
+  .check li::before{content:"";position:absolute;left:2px;top:11px;width:13px;height:13px;border-radius:4px;border:1.5px solid var(--teal)}
+  .check b{color:#fff}
+
+  footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:26px}
+  @media(max-width:760px){.now{grid-template-columns:1fr}.meta{margin-left:0}.topnav a:nth-child(n+5){display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">Task 5 · Security Lockdown</span>
+  <a href="#now">Today</a>
+  <a href="#model">The risk</a>
+  <a href="#do">What to do</a>
+  <a href="#table">Headers scorecard</a>
+  <a href="#done">Done when</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kchip">● Deep-dive · mapped to api/main.py</span>
+  <h1>Task 5 — <span class="g">proxy &amp; security lockdown</span></h1>
+  <p class="lede">Your security <b>headers are genuinely strong</b> — better than most. But two things are wide open: the app <b>trusts proxy headers from anyone</b>, and CORS <b>falls back to a wildcard with credentials</b>. Here's exactly what to tighten.</p>
+</div></header>
+
+<!-- TODAY -->
+<section class="sec" id="now"><div class="wrap">
+  <div class="seclabel">Where you are today</div>
+  <h2>What your code does right now</h2>
+  <div class="panel">
+    <div class="now">
+      <div class="it"><span class="b ok">strong</span><span><b style="color:#fff">Security headers</b> — CSP, HSTS, X-Frame-Options, nosniff, COOP/COEP/CORP all set in <code>SecurityHeadersMiddleware</code>.</span></div>
+      <div class="it"><span class="b ok">good</span><span><b style="color:#fff">Cookies</b> mostly hardened — HttpOnly, SameSite, and a <code>COOKIE_SECURE</code> switch via the <code>_cookie_set</code> helper.</span></div>
+      <div class="it"><span class="b bad">open</span><span><b style="color:#fff">Proxy trust</b> — <code>ProxyHeadersMiddleware(trusted_hosts="*")</code> believes <code>X-Forwarded-For</code> from <i>anyone</i>.</span></div>
+      <div class="it"><span class="b bad">open</span><span><b style="color:#fff">CORS fallback</b> — if <code>ALLOWED_ORIGINS</code> is unset it becomes <code>["*"]</code> <i>with</i> <code>allow_credentials=True</code>.</span></div>
+      <div class="it"><span class="b warn">minor</span><span><b style="color:#fff">One cookie</b> (<code>pub_session_id</code>, main.py:553) is set by hand and misses the <code>Secure</code> flag.</span></div>
+      <div class="it"><span class="b warn">minor</span><span><b style="color:#fff">CSP</b> allows <code>'unsafe-inline'</code>; <code>Permissions-Policy</code> allows <code>microphone=*</code>.</span></div>
+    </div>
+    <div class="surprise">
+      <span class="l">Why the proxy line is the priority</span>
+      With <code>trusted_hosts="*"</code>, any client can send a forged <code>X-Forwarded-For</code> header and <b>pretend to be any IP</b>. That silently defeats your IP-keyed rate limits (Task 2's <code>login</code> 3/min) and <b>poisons every log and audit trail</b> with fake source IPs.
+    </div>
+  </div>
+</div></section>
+
+<!-- RISK MODEL -->
+<section class="sec" id="model"><div class="wrap">
+  <div class="seclabel">The risk, visually</div>
+  <h2>Who does the app trust?</h2>
+  <p class="sub">A reverse proxy rewrites the client's real IP into <code>X-Forwarded-For</code>. The app must trust that header <i>only</i> when it comes from your own load balancer — never from the public internet.</p>
+  <div class="figure">
+    <svg viewBox="0 0 640 232" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="With trust set to star, a forged forwarded-for header is believed and the rate limit is bypassed. With trust limited to the load balancer IP, the forged header is ignored and the real IP is used.">
+      <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+      <text x="20" y="20" font-family="JetBrains Mono" font-size="11" fill="#E5705F" letter-spacing=".5">NOW · trusted_hosts = "*"</text>
+      <rect x="20" y="30" width="150" height="42" rx="9" fill="#2A1715" stroke="#5A2A22"/><text x="95" y="47" font-family="Inter" font-size="12" fill="#EAEEF6" text-anchor="middle">Attacker</text><text x="95" y="63" font-family="Inter" font-size="9.5" fill="#9AA6BC" text-anchor="middle">forges X-Forwarded-For</text>
+      <line x1="170" y1="51" x2="250" y2="51" stroke="#E5705F" stroke-width="1.5" marker-end="url(#a)"/>
+      <rect x="252" y="30" width="150" height="42" rx="9" fill="#141B2B" stroke="#2C3650"/><text x="327" y="47" font-family="Inter" font-size="12" fill="#EAEEF6" text-anchor="middle">App trusts *</text><text x="327" y="63" font-family="Inter" font-size="9.5" fill="#9AA6BC" text-anchor="middle">believes the fake IP</text>
+      <line x1="402" y1="51" x2="470" y2="51" stroke="#E5705F" stroke-width="1.5" marker-end="url(#a)"/>
+      <rect x="472" y="30" width="150" height="42" rx="9" fill="#2A1715" stroke="#5A2A22"/><text x="547" y="47" font-family="Inter" font-size="11.5" fill="#E5705F" text-anchor="middle" font-weight="600">Rate limit</text><text x="547" y="63" font-family="Inter" font-size="9.5" fill="#F2C9C1" text-anchor="middle">bypassed · logs poisoned</text>
+
+      <text x="20" y="128" font-family="JetBrains Mono" font-size="11" fill="#46C98B" letter-spacing=".5">FIXED · trusted_hosts = [ LB IP ]</text>
+      <rect x="20" y="138" width="150" height="42" rx="9" fill="#13261F" stroke="#1C7A53"/><text x="95" y="155" font-family="Inter" font-size="12" fill="#EAEEF6" text-anchor="middle">Attacker</text><text x="95" y="171" font-family="Inter" font-size="9.5" fill="#9AA6BC" text-anchor="middle">forges the header</text>
+      <line x1="170" y1="159" x2="250" y2="159" stroke="#46C98B" stroke-width="1.5" marker-end="url(#a)"/>
+      <rect x="252" y="138" width="150" height="42" rx="9" fill="#141B2B" stroke="#2C3650"/><text x="327" y="155" font-family="Inter" font-size="12" fill="#EAEEF6" text-anchor="middle">Trusts only LB</text><text x="327" y="171" font-family="Inter" font-size="9.5" fill="#9AA6BC" text-anchor="middle">ignores fake header</text>
+      <line x1="402" y1="159" x2="470" y2="159" stroke="#46C98B" stroke-width="1.5" marker-end="url(#a)"/>
+      <rect x="472" y="138" width="150" height="42" rx="9" fill="#13261F" stroke="#1C7A53"/><text x="547" y="155" font-family="Inter" font-size="11.5" fill="#46C98B" text-anchor="middle" font-weight="600">Real IP used</text><text x="547" y="171" font-family="Inter" font-size="9.5" fill="#9FE3D0" text-anchor="middle">limits &amp; logs honest</text>
+    </svg>
+  </div>
+</div></section>
+
+<!-- WHAT TO DO -->
+<section class="sec" id="do"><div class="wrap">
+  <div class="seclabel">What to do · in order</div>
+  <h2>The four moves</h2>
+  <p class="sub">Two critical (5a, 5b), two hardening (5c, 5d). All in <code>api/main.py</code> and <code>api/session_auth.py</code>.</p>
+
+  <!-- 5a -->
+  <div class="card r">
+    <div class="head">
+      <div class="row"><span class="tag">5a</span><h3>Lock proxy trust to your load balancer</h3><span class="meta">critical · ~2 hrs</span></div>
+      <div class="files"><span class="file">api/main.py:128</span><span class="file">.env (TRUSTED_PROXY_IPS)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Find your proxy/LB internal IP</b> (Azure App Gateway / nginx). That's the only host allowed to set forwarded headers.</li>
+        <li><b>Replace the wildcard</b> with that IP list from an env var.
+          <pre class="code"><span class="c"># api/main.py — was: trusted_hosts="*"</span>
+TRUSTED = [p.strip() <span class="k">for</span> p <span class="k">in</span> os.getenv(<span class="s">"TRUSTED_PROXY_IPS"</span>, <span class="s">""</span>).split(<span class="s">","</span>) <span class="k">if</span> p.strip()]
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=TRUSTED <span class="k">or</span> <span class="s">"127.0.0.1"</span>)</pre>
+        </li>
+        <li><b>Verify</b> — send a request with a bogus <code>X-Forwarded-For</code> directly (not via the LB); the app should log your <i>real</i> IP, not the fake one.</li>
+      </ol>
+      <div class="note tip"><span class="l">Do this before trusting Task 2</span>Rate limits are only as honest as the IP behind them. Fixing this makes your <code>login</code> limit actually protect against brute force.</div>
+    </div>
+  </div>
+
+  <!-- 5b -->
+  <div class="card r">
+    <div class="head">
+      <div class="row"><span class="tag">5b</span><h3>Make CORS fail closed</h3><span class="meta">critical · ~2 hrs</span></div>
+      <div class="files"><span class="file">api/main.py:276–286</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Remove the wildcard fallback.</b> Today an empty <code>ALLOWED_ORIGINS</code> becomes <code>["*"]</code> — and with <code>allow_credentials=True</code>, that lets <i>any</i> website make logged-in requests to your API.</li>
+        <li><b>Require explicit origins</b> and narrow methods/headers to what you use.
+          <pre class="code"><span class="c"># api/main.py</span>
+origins = [o.strip() <span class="k">for</span> o <span class="k">in</span> os.getenv(<span class="s">"ALLOWED_ORIGINS"</span>, <span class="s">""</span>).split(<span class="s">","</span>) <span class="k">if</span> o.strip()]
+<span class="k">if not</span> origins:
+    <span class="k">raise</span> RuntimeError(<span class="s">"ALLOWED_ORIGINS must be set"</span>)   <span class="r"># fail closed, never "*"</span>
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=<span class="k">True</span>,
+    allow_methods=[<span class="s">"GET"</span>, <span class="s">"POST"</span>, <span class="s">"PUT"</span>, <span class="s">"DELETE"</span>, <span class="s">"OPTIONS"</span>],
+    allow_headers=[<span class="s">"Authorization"</span>, <span class="s">"Content-Type"</span>],
+)</pre>
+        </li>
+        <li><b>Set <code>ALLOWED_ORIGINS</code></b> in every environment (your domain + local dev). Prod must never boot without it.</li>
+      </ol>
+      <div class="note tip"><span class="l">The rule</span><code>allow_origins=["*"]</code> and <code>allow_credentials=True</code> must never appear together — it's the classic cross-site data-theft misconfig.</div>
+    </div>
+  </div>
+
+  <!-- 5c -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">5c</span><h3>Make cookies consistently secure</h3><span class="meta">hardening · ~2 hrs</span></div>
+      <div class="files"><span class="file">api/main.py:553</span><span class="file">api/session_auth.py (COOKIE_SECURE)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Fix the hand-rolled cookie.</b> The <code>pub_session_id</code> cookie at line 553 sets <code>HttpOnly; SameSite=Lax</code> but <b>no <code>Secure</code></b>. Route it through your existing helper so it inherits <code>Secure</code>:
+          <pre class="code"><span class="c"># api/main.py:553 — instead of a raw Set-Cookie string</span>
+_cookie_set(resp, <span class="s">"pub_session_id"</span>, pub_sid, max_age=86400)</pre>
+        </li>
+        <li><b>Force <code>COOKIE_SECURE=true</code> in production</b> so no session cookie is ever sent over plain HTTP.</li>
+        <li><b>Confirm <code>SameSite</code></b> is <code>Lax</code> (or <code>Strict</code> where flows allow) for all auth cookies.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 5d -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">5d</span><h3>Polish the (already good) headers + review sweep</h3><span class="meta">hardening · ~half a day</span></div>
+      <div class="files"><span class="file">api/main.py (SecurityHeadersMiddleware)</span><span class="file">requirements.txt</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Add WebSocket to CSP.</b> You use <code>/ws/chat</code>; make sure <code>connect-src</code> allows your <code>wss://</code> origin so the socket isn't blocked in strict browsers.</li>
+        <li><b>Tighten <code>Permissions-Policy</code></b> — change <code>microphone=*</code> to <code>microphone=(self)</code> so only your own origin can use the mic.</li>
+        <li><b>Plan away <code>'unsafe-inline'</code></b> in CSP over time (move inline scripts/styles to files or nonces). Not urgent, but it's the weakest part of an otherwise strong CSP.</li>
+        <li><b>Quick review sweep:</b> run <code>pip-audit</code> on prod deps, confirm no secrets in the repo (your earlier scan was clean), ensure debug/reload is off in prod, and restrict SSH/admin ports to known IPs.</li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<!-- SCORECARD -->
+<section class="sec" id="table"><div class="wrap">
+  <div class="seclabel">Reference</div>
+  <h2>Security scorecard — your current headers</h2>
+  <p class="sub">Most of this is already right. The table shows what to keep, what to tweak, and what to fix.</p>
+  <table>
+    <thead><tr><th>Control</th><th>Current</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td class="e">Content-Security-Policy</td><td>set, but <code>'unsafe-inline'</code></td><td><span class="pill p-mid">good</span></td><td>add <code>wss:</code>, plan away inline</td></tr>
+      <tr><td class="e">Strict-Transport-Security</td><td>1 yr · includeSubDomains</td><td><span class="pill p-good">strong</span></td><td>keep</td></tr>
+      <tr><td class="e">X-Frame-Options</td><td>SAMEORIGIN</td><td><span class="pill p-good">strong</span></td><td>keep</td></tr>
+      <tr><td class="e">X-Content-Type-Options</td><td>nosniff</td><td><span class="pill p-good">strong</span></td><td>keep</td></tr>
+      <tr><td class="e">COOP / COEP / CORP</td><td>same-origin · require-corp</td><td><span class="pill p-good">strong</span></td><td>keep</td></tr>
+      <tr><td class="e">Permissions-Policy</td><td><code>microphone=*</code></td><td><span class="pill p-mid">loose</span></td><td>→ <code>microphone=(self)</code></td></tr>
+      <tr><td class="e">Proxy trust</td><td><code>trusted_hosts="*"</code></td><td><span class="pill p-bad">fix</span></td><td>lock to LB IP (5a)</td></tr>
+      <tr><td class="e">CORS</td><td><code>["*"]</code> fallback + credentials</td><td><span class="pill p-bad">fix</span></td><td>fail closed (5b)</td></tr>
+      <tr><td class="e">Cookies</td><td>one missing <code>Secure</code></td><td><span class="pill p-mid">tweak</span></td><td>use helper + <code>COOKIE_SECURE</code> (5c)</td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- DONE -->
+<section class="sec" id="done"><div class="wrap">
+  <div class="seclabel">Definition of done</div>
+  <h2>Task 5 is finished when…</h2>
+  <div class="check">
+    <div class="k">Done when</div>
+    <ul>
+      <li><b>5a —</b> proxy trust is limited to the load-balancer IP; a forged <code>X-Forwarded-For</code> from outside is ignored (verified).</li>
+      <li><b>5b —</b> CORS never falls back to <code>"*"</code>; the app refuses to start without <code>ALLOWED_ORIGINS</code>; methods/headers narrowed.</li>
+      <li><b>5c —</b> every auth cookie (including <code>pub_session_id</code>) is <code>HttpOnly</code> + <code>Secure</code> + <code>SameSite</code>; <code>COOKIE_SECURE=true</code> in prod.</li>
+      <li><b>5d —</b> CSP allows your <code>wss://</code> origin; <code>microphone</code> scoped to self; <code>pip-audit</code> clean; debug off; admin ports restricted.</li>
+      <li>The strong headers you already have are left intact — this task tightens, it doesn't rebuild.</li>
+    </ul>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Task 5 deep-dive · proxy &amp; security lockdown · mapped to api/main.py &amp; session_auth.py</div></footer>
+
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Inventory — Sampurna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0E1320;--panel:#141B2B;--ink:#EAEEF6;--muted:#9AA6BC;--faint:#6E7A92;--line:#222C40;--line2:#2C3650;
+--green:#46C98B;--blue:#5B8DEF;--teal:#34C6C0;--amber:#E0A537;--red:#E5705F;--violet:#9B8CFF;
+--mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+--shadow:0 12px 34px rgba(0,0,0,.42);}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1000px 460px at 82% -8%,rgba(52,198,192,.10),transparent 60%),radial-gradient(820px 460px at -8% 8%,rgba(91,141,239,.08),transparent 55%),var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1140px;margin:0 auto;padding:0 22px}
+code{font-family:var(--mono);font-size:.85em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+.topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topnav .wrap{display:flex;gap:10px;align-items:center;padding:10px 22px}
+.topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-right:auto}
+.topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+.topnav a:hover{background:#1A2336;color:var(--ink)}
+.hero{padding:54px 0 18px}
+.kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;border:1px solid var(--teal);border-radius:30px;padding:5px 13px;background:rgba(52,198,192,.08)}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,44px);line-height:1.05;letter-spacing:-.02em;margin:16px 0 12px}
+h1 .g{background:linear-gradient(90deg,#34C6C0,#5B8DEF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{font-size:17px;color:#C2CCDE;max-width:760px;margin:0}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 6px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow)}
+.stat b{font-family:var(--disp);font-size:22px;color:#fff;display:block}
+.stat span{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sec{padding:34px 0 4px}
+.seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(20px,3vw,27px);margin:8px 0 4px;color:#fff}
+.sec .sub{color:var(--muted);margin:0 0 6px;max-width:820px;font-size:14px}
+.note{margin:14px 0;border-radius:11px;padding:11px 14px;font-size:13px;line-height:1.5;background:rgba(91,141,239,.08);border:1px solid #2A3E66;color:#C9D7F2}
+.note b{color:#fff}.note .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px;color:var(--blue)}
+.search{width:100%;max-width:420px;margin:6px 0 4px;background:#0B1018;border:1px solid var(--line2);border-radius:10px;padding:10px 13px;color:var(--ink);font-family:var(--mono);font-size:13px}
+.search:focus{outline:none;border-color:var(--teal)}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin-top:12px;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:12.6px;background:var(--panel);min-width:820px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{position:sticky;top:0;background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;z-index:1}
+tbody tr:hover{background:#172033}
+td.e{font-family:var(--mono);color:#A9C2F2}
+td.f{font-family:var(--mono);color:#7E8AA3;font-size:11px}
+td.u{color:#B7C2D6}td.ctr{text-align:center}
+.mth{font-family:var(--mono);font-weight:600;font-size:11px}
+.yn{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 8px;border-radius:11px}
+.yn.y{background:rgba(70,201,139,.14);color:var(--green)}.yn.n{background:rgba(229,112,95,.12);color:var(--red)}.yn.w{background:rgba(155,140,255,.14);color:var(--violet)}
+/* module cards */
+.mgrid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+.mcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+.mcard.eng{background:linear-gradient(180deg,rgba(155,140,255,.05),var(--panel));border-color:#3A3168}
+.mh{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:6px}
+.mname{font-family:var(--disp);font-weight:600;font-size:18px;color:#fff;margin-right:auto}
+.badge{font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.badge.pfx{background:#0B1018;color:#A9C2F2;border:1px solid var(--line2)}
+.badge.cnt{background:rgba(52,198,192,.14);color:var(--teal)}
+.badge.utl{background:rgba(224,165,55,.12);color:var(--amber)}
+.muses{color:#B7C2D6;font-size:13.5px;margin:2px 0 12px}
+.mlabel{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:12px 0 7px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:7px;border:1px solid var(--line2)}
+.chip.ep{background:#0E1A2C;color:#B7CBF0}
+.chip.ep i{font-style:normal;font-weight:600;margin-right:6px}
+.chip.ep i.g{color:var(--green)}.chip.ep i.p{color:var(--blue)}.chip.ep i.u{color:var(--amber)}.chip.ep i.d{color:var(--red)}.chip.ep i.w{color:var(--violet)}
+.chip.fl{background:#101d17;color:#9FE3D0;border-color:#1C7A53}
+.chip.fl.plan{background:#0B1018;color:#9AA6BC;border:1px dashed #3A4664}
+footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:30px}
+@media(max-width:700px){.topnav a{display:none}}
+</style></head><body>
+<nav class="topnav"><div class="wrap"><span class="brand">API Inventory</span>
+<a href="#t1sec">Endpoints</a><a href="#t2sec">Modules</a></div></nav>
+<header class="hero"><div class="wrap">
+<span class="kchip">● Full API map · generated from the codebase</span>
+<h1>API inventory — <span class="g">every endpoint &amp; module</span></h1>
+<p class="lede">A complete map of the platform's HTTP &amp; WebSocket surface: <b>138 endpoints across 12 route files</b>, plus the AI engine modules behind them. Table 1 lists every endpoint; Table 2 groups them by module with their URLs and source files.</p>
+<div class="stats">
+<div class="stat"><b>138</b><span>Endpoints</span></div>
+<div class="stat"><b>12</b><span>Route files</span></div>
+<div class="stat"><b>16</b><span>Modules</span></div>
+<div class="stat"><b>4</b><span>Rate-limited</span></div>
+<div class="stat"><b>3</b><span>WebSocket</span></div>
+</div>
+<div class="note"><span class="l">How to read the Auth &amp; Rate columns</span><b>Auth</b> = the endpoint requires an authenticated session (the app uses <b>session-cookie auth</b>, not JWT today — JWT is reserved for the future self-host licence token). <b>Rate</b> = an explicit <code>@limiter.limit</code> is present — only 4 endpoints have one today (see Task 2). <b>WS</b> = WebSocket, authorised at connect time.</div>
+</div></header>
+
+<section class="sec" id="t1sec"><div class="wrap">
+<div class="seclabel">Table 1</div><h2>Every endpoint</h2>
+<p class="sub">Method, path, what it does, whether it needs auth, whether it's rate-limited, and the file it lives in. Type to filter.</p>
+<input id="flt" class="search" placeholder="filter endpoints — e.g. voice, payment, admin, /ws/ …">
+<div class="tblwrap"><table id="t1"><thead><tr>
+<th>API</th><th>Endpoint</th><th>Uses</th><th>Utility</th><th>Auth</th><th>Rate</th><th>File location</th>
+</tr></thead><tbody>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/analytics</td><td>Conversation analytics</td><td class="u">Analytics</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/ai/feedback</td><td>User feedback</td><td class="u">Analytics</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/ai/session-end</td><td>End session</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/feedback</td><td>User feedback</td><td class="u">Analytics</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/feedback-stats</td><td>User feedback</td><td class="u">Analytics</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/sentiment-stats</td><td>Sentiment stats</td><td class="u">Analytics</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/summaries</td><td>Conversation summaries</td><td class="u">Analytics</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/summary/{session_id}</td><td>Conversation summaries</td><td class="u">Analytics</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/topic-stats</td><td>Topic stats</td><td class="u">Analytics</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/ai_intelligence_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/</td><td>Home / portal</td><td class="u">Core</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/access/chatbot</td><td>Grant bot access</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/access/menu</td><td>Grant menu access</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/access/my-menus</td><td>My menu access</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/access/{admin_id}</td><td>Get admin access</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/admin-types</td><td>List admin types</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/admin-types</td><td>Create admin type</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/admin-types/assign</td><td>Assign admin type</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/admin-types/{type_key}</td><td>Update admin type</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E5705F">DELETE</span></td><td class="e">/api/admin-types/{type_key}</td><td>Delete admin type</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PUT</span></td><td class="e">/api/admin-types/{type_key}/chatbots</td><td>Set type chatbots</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PUT</span></td><td class="e">/api/admin-types/{type_key}/permissions</td><td>Update permissions</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/bots</td><td>List chatbots</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/bots</td><td>Create chatbot</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/bots/add-documents</td><td>Upload docs (RAG ingest)</td><td class="u">RAG ingest</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/bots/setup-db</td><td>Provision bot DB</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/bots/upload-documents</td><td>Upload docs (RAG ingest)</td><td class="u">RAG ingest</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/bots/upload-image</td><td>Upload bot image</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/bots/{category}</td><td>Update chatbot</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E5705F">DELETE</span></td><td class="e">/api/bots/{category}</td><td>Delete chatbot</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/bots/{category}/uploaded-files</td><td>List uploaded files</td><td class="u">Admin · Docs</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E5705F">DELETE</span></td><td class="e">/api/bots/{category}/uploaded-files/{file_name}</td><td>Delete a file</td><td class="u">Admin · Docs</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/bots/{category}/uploaded-files/{file_name}/context</td><td>Edit file context</td><td class="u">Admin · Docs</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/bots/{category}/uploaded-files/{file_name}/download</td><td>Download a file</td><td class="u">Admin · Docs</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/choose-pages</td><td>List choose-pages</td><td class="u">Admin · Pages</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/choose-pages</td><td>Create choose-page</td><td class="u">Admin · Pages</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/choose-pages/public/{slug}</td><td>Public landing page</td><td class="u">Pages</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/choose-pages/{slug}</td><td>Update choose-page</td><td class="u">Admin · Pages</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E5705F">DELETE</span></td><td class="e">/api/choose-pages/{slug}</td><td>Delete choose-page</td><td class="u">Admin · Pages</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PUT</span></td><td class="e">/api/choose-pages/{slug}/bots</td><td>Update choose-page</td><td class="u">Admin · Pages</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/debug/portal-bots</td><td>Debug helper</td><td class="u">Core</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/payment/config</td><td>Razorpay config</td><td class="u">Billing</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/payment/create-order</td><td>Create payment order</td><td class="u">Billing</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/payment/history</td><td>Payment history</td><td class="u">Billing</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/payment/verify</td><td>Verify payment</td><td class="u">Billing</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/permissions</td><td>Get permissions</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/permissions</td><td>Update permissions</td><td class="u">Admin · Access</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/pricing</td><td>Get pricing</td><td class="u">Billing</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/pricing</td><td>Update pricing</td><td class="u">Billing</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/prompts/{category}</td><td>Get bot prompt</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/prompts/{category}</td><td>Edit bot prompt</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/reports/chatbot-usage</td><td>Chatbot usage report</td><td class="u">Admin · Reports</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/reports/conversations</td><td>Conversation report</td><td class="u">Admin · Reports</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/session-config</td><td>Get session config</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/session-config</td><td>Update session config</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/sessions</td><td>List active sessions</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/sessions/kill-all</td><td>Kill all sessions</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/sessions/{session_id}/kill</td><td>Kill a session</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/settings/system</td><td>Read system settings</td><td class="u">Admin · Settings</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/settings/system</td><td>Update system settings</td><td class="u">Admin · Settings</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/users</td><td>List users</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/users</td><td>Create user</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/users/bulk-upload</td><td>Bulk create users</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/users/{user_id}</td><td>Update user</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E5705F">DELETE</span></td><td class="e">/api/users/{user_id}</td><td>Delete user</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/voice-quota</td><td>View voice quota</td><td class="u">Admin · Quota</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/voice-quota/history</td><td>Voice quota history</td><td class="u">Admin · Quota</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/voice-quota/summary</td><td>Voice quota summary</td><td class="u">Admin · Quota</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/api/voice-quota/{user_id}</td><td>Set voice quota</td><td class="u">Admin · Quota</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/voice-quota/{user_id}/reset</td><td>Reset voice quota</td><td class="u">Admin · Quota</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/portal</td><td>—</td><td class="u">—</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">admin/api/admin_router.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/change-password</td><td>Change password</td><td class="u">Auth</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn y">Yes</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/chatbots</td><td>List user&#x27;s chatbots</td><td class="u">Auth</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/forgot-password</td><td>Start password reset</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn y">Yes</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/heartbeat</td><td>Keep session alive</td><td class="u">Auth</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/login</td><td>User login</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn y">Yes</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/me</td><td>Current user info</td><td class="u">Auth</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/new-session</td><td>Start a session</td><td class="u">Auth</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/reset-password</td><td>Complete password reset</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn y">Yes</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/select-bot</td><td>Pick active chatbot</td><td class="u">Auth</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/session-config</td><td>Get session config</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/session-end</td><td>End session</td><td class="u">Auth</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/usage</td><td>Read usage</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_auth.py</td></tr>
+<tr><td><span class="mth" style="color:#9B8CFF">WEBSOCKET</span></td><td class="e">/ws/chat</td><td>Live chat stream</td><td class="u">LLM · Gemini</td><td class="ctr"><span class="yn w">WS</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/websocket.py</td></tr>
+<tr><td><span class="mth" style="color:#9B8CFF">WEBSOCKET</span></td><td class="e">/ws/stt-fast</td><td>Live speech in/out</td><td class="u">Voice · STT/TTS</td><td class="ctr"><span class="yn w">WS</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/websocket.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/api/choose</td><td>Route user to bot</td><td class="u">Routing</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/choose.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/</td><td>Home / portal</td><td class="u">Core</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/chat-config/{slug}</td><td>Chat page config</td><td class="u">Core</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/debug-audio</td><td>Debug helper</td><td class="u">Core</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/feature-flags</td><td>Read feature flags</td><td class="u">Core</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/api/me</td><td>Current user info</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/me.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/change-password</td><td>Change password</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/chat</td><td>Chat page</td><td class="u">Core</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/chat/{chatbot_code}</td><td>Chat page</td><td class="u">Core</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/choose</td><td>Route user to bot</td><td class="u">Routing</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/choose/{slug}</td><td>Route user to bot</td><td class="u">Routing</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/db</td><td>DB status page</td><td class="u">Core</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/forgot-password</td><td>Start password reset</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/health</td><td>Health check</td><td class="u">Core</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/login</td><td>User login</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/reset-password</td><td>Complete password reset</td><td class="u">Auth</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/test-email</td><td>Test email send</td><td class="u">Core</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/main.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/session-config</td><td>Get session config</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/session_config_endpoint.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/bots</td><td>List chatbots</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/bots</td><td>Create chatbot</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/bots/setup-db</td><td>Provision bot DB</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/bots/{category}</td><td>Update chatbot</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#E5705F">DELETE</span></td><td class="e">/bots/{category}</td><td>Delete chatbot</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/bots/{category}/uploaded-files</td><td>List uploaded files</td><td class="u">Admin · Docs</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#E5705F">DELETE</span></td><td class="e">/bots/{category}/uploaded-files/{file_name}</td><td>Delete a file</td><td class="u">Admin · Docs</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/prompts/{category}</td><td>Get bot prompt</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/prompts/{category}</td><td>Edit bot prompt</td><td class="u">Admin · Bots</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/reports/conversations</td><td>Conversation report</td><td class="u">Admin · Reports</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/sessions</td><td>List active sessions</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/sessions/kill-all</td><td>Kill all sessions</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/sessions/{session_id}/kill</td><td>Kill a session</td><td class="u">Admin · Sessions</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/settings/system</td><td>Read system settings</td><td class="u">Admin · Settings</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/settings/system</td><td>Update system settings</td><td class="u">Admin · Settings</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/users</td><td>List users</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/users</td><td>Create user</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/users/{user_id}</td><td>Update user</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#E5705F">DELETE</span></td><td class="e">/users/{user_id}</td><td>Delete user</td><td class="u">Admin · Users</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/voice-quota</td><td>View voice quota</td><td class="u">Admin · Quota</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#E0A537">PATCH</span></td><td class="e">/voice-quota/{user_id}</td><td>Set voice quota</td><td class="u">Admin · Quota</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/voice-quota/{user_id}/reset</td><td>Reset voice quota</td><td class="u">Admin · Quota</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_admin_bridge.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/config</td><td>Push config</td><td class="u">Master</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/config</td><td>Read config</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/create</td><td>Create master entry</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/usage</td><td>Read usage</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/config</td><td>Push config</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config_receiver.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/credentials</td><td>Read credentials</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config_receiver.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/credentials</td><td>Push credentials</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config_receiver.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/health-detail</td><td>Health check</td><td class="u">Core</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config_receiver.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/restart</td><td>Restart service</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config_receiver.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/usage</td><td>Read usage</td><td class="u">Master</td><td class="ctr"><span class="yn y">Yes</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">api/master_config_receiver.py</td></tr>
+<tr><td><span class="mth" style="color:#5B8DEF">POST</span></td><td class="e">/ask-vision</td><td>Image Q&amp;A</td><td class="u">Vision · OCR+LLM</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">image/router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/conversation/{session_id}</td><td>Get conversation</td><td class="u">Vision</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">image/router.py</td></tr>
+<tr><td><span class="mth" style="color:#46C98B">GET</span></td><td class="e">/session-images/{session_id}</td><td>Get session images</td><td class="u">Vision</td><td class="ctr"><span class="yn n">No</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">image/router.py</td></tr>
+<tr><td><span class="mth" style="color:#9B8CFF">WEBSOCKET</span></td><td class="e">/ws-ask-vision</td><td>Image Q&amp;A</td><td class="u">Vision · OCR+LLM</td><td class="ctr"><span class="yn w">WS</span></td><td class="ctr"><span class="yn n">No</span></td><td class="f">image/router.py</td></tr>
+</tbody></table></div>
+</div></section>
+
+<section class="sec" id="t2sec"><div class="wrap">
+<div class="seclabel">Table 2</div><h2>By module — endpoints &amp; source files</h2>
+<p class="sub">Each module with its URL prefix, API count, every endpoint URL, and all related <code>.py</code> files with locations. Admin is split into three domains; the last five are internal AI engines (LLM, STT, TTS, RAG, OCR) surfaced through the chat, voice, and vision endpoints.</p>
+<div class="mgrid">
+<div class="mcard">
+<div class="mh"><span class="mname">Authentication & Session</span>
+<span class="badge pfx">(auth router)</span>
+<span class="badge cnt">12 API</span>
+<span class="badge utl">Auth · login &amp; password rate-limited</span></div>
+<div class="muses">User login, password flows, session lifecycle</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="g">GET</i>/session-config</span><span class="chip ep"><i class="p">POST</i>/login</span><span class="chip ep"><i class="p">POST</i>/change-password</span><span class="chip ep"><i class="g">GET</i>/chatbots</span><span class="chip ep"><i class="p">POST</i>/select-bot</span><span class="chip ep"><i class="p">POST</i>/new-session</span><span class="chip ep"><i class="g">GET</i>/me</span><span class="chip ep"><i class="p">POST</i>/heartbeat</span><span class="chip ep"><i class="p">POST</i>/session-end</span><span class="chip ep"><i class="g">GET</i>/usage</span><span class="chip ep"><i class="p">POST</i>/forgot-password</span><span class="chip ep"><i class="p">POST</i>/reset-password</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">api/session_auth.py</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Admin · Bots &amp; Content</span>
+<span class="badge pfx">/admin</span>
+<span class="badge cnt">21 API</span>
+<span class="badge utl">Admin · content management</span></div>
+<div class="muses">Chatbots, prompts, documents &amp; landing pages</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="g">GET</i>/api/debug/portal-bots</span><span class="chip ep"><i class="g">GET</i>/api/bots</span><span class="chip ep"><i class="p">POST</i>/api/bots</span><span class="chip ep"><i class="u">PATCH</i>/api/bots/{category}</span><span class="chip ep"><i class="g">GET</i>/api/choose-pages</span><span class="chip ep"><i class="p">POST</i>/api/choose-pages</span><span class="chip ep"><i class="u">PATCH</i>/api/choose-pages/{slug}</span><span class="chip ep"><i class="d">DELETE</i>/api/choose-pages/{slug}</span><span class="chip ep"><i class="u">PUT</i>/api/choose-pages/{slug}/bots</span><span class="chip ep"><i class="g">GET</i>/api/choose-pages/public/{slug}</span><span class="chip ep"><i class="d">DELETE</i>/api/bots/{category}</span><span class="chip ep"><i class="p">POST</i>/api/bots/setup-db</span><span class="chip ep"><i class="p">POST</i>/api/bots/upload-image</span><span class="chip ep"><i class="p">POST</i>/api/bots/upload-documents</span><span class="chip ep"><i class="p">POST</i>/api/bots/add-documents</span><span class="chip ep"><i class="g">GET</i>/api/bots/{category}/uploaded-files</span><span class="chip ep"><i class="u">PATCH</i>/api/bots/{category}/uploaded-files/{file_name}/context</span><span class="chip ep"><i class="g">GET</i>/api/bots/{category}/uploaded-files/{file_name}/download</span><span class="chip ep"><i class="d">DELETE</i>/api/bots/{category}/uploaded-files/{file_name}</span><span class="chip ep"><i class="g">GET</i>/api/prompts/{category}</span><span class="chip ep"><i class="u">PATCH</i>/api/prompts/{category}</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">admin/api/admin_router.py</span><span class="chip fl plan">admin/routers/bots.py · planned</span><span class="chip fl plan">admin/routers/documents.py · planned</span><span class="chip fl plan">admin/routers/pages.py · planned</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Admin · Users &amp; Access</span>
+<span class="badge pfx">/admin</span>
+<span class="badge cnt">23 API</span>
+<span class="badge utl">Admin · people &amp; RBAC</span></div>
+<div class="muses">Users, roles/permissions, admin-types &amp; live sessions</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="g">GET</i>/api/users</span><span class="chip ep"><i class="p">POST</i>/api/users</span><span class="chip ep"><i class="p">POST</i>/api/users/bulk-upload</span><span class="chip ep"><i class="u">PATCH</i>/api/users/{user_id}</span><span class="chip ep"><i class="d">DELETE</i>/api/users/{user_id}</span><span class="chip ep"><i class="g">GET</i>/api/sessions</span><span class="chip ep"><i class="p">POST</i>/api/sessions/{session_id}/kill</span><span class="chip ep"><i class="p">POST</i>/api/sessions/kill-all</span><span class="chip ep"><i class="g">GET</i>/api/session-config</span><span class="chip ep"><i class="u">PATCH</i>/api/session-config</span><span class="chip ep"><i class="g">GET</i>/api/permissions</span><span class="chip ep"><i class="u">PATCH</i>/api/permissions</span><span class="chip ep"><i class="g">GET</i>/api/admin-types</span><span class="chip ep"><i class="p">POST</i>/api/admin-types</span><span class="chip ep"><i class="u">PATCH</i>/api/admin-types/{type_key}</span><span class="chip ep"><i class="d">DELETE</i>/api/admin-types/{type_key}</span><span class="chip ep"><i class="u">PUT</i>/api/admin-types/{type_key}/permissions</span><span class="chip ep"><i class="u">PUT</i>/api/admin-types/{type_key}/chatbots</span><span class="chip ep"><i class="p">POST</i>/api/admin-types/assign</span><span class="chip ep"><i class="g">GET</i>/api/access/my-menus</span><span class="chip ep"><i class="g">GET</i>/api/access/{admin_id}</span><span class="chip ep"><i class="p">POST</i>/api/access/chatbot</span><span class="chip ep"><i class="p">POST</i>/api/access/menu</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">admin/api/admin_router.py</span><span class="chip fl plan">admin/routers/users.py · planned</span><span class="chip fl plan">admin/routers/sessions.py · planned</span><span class="chip fl plan">admin/routers/access.py · planned</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Admin · Ops &amp; Billing</span>
+<span class="badge pfx">/admin</span>
+<span class="badge cnt">17 API</span>
+<span class="badge utl">Admin · operations &amp; commerce</span></div>
+<div class="muses">Voice quota, pricing, payments, settings &amp; reports</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="g">GET</i>/</span><span class="chip ep"><i class="g">GET</i>/portal</span><span class="chip ep"><i class="g">GET</i>/api/voice-quota/summary</span><span class="chip ep"><i class="g">GET</i>/api/voice-quota</span><span class="chip ep"><i class="u">PATCH</i>/api/voice-quota/{user_id}</span><span class="chip ep"><i class="p">POST</i>/api/voice-quota/{user_id}/reset</span><span class="chip ep"><i class="g">GET</i>/api/pricing</span><span class="chip ep"><i class="u">PATCH</i>/api/pricing</span><span class="chip ep"><i class="g">GET</i>/api/voice-quota/history</span><span class="chip ep"><i class="g">GET</i>/api/settings/system</span><span class="chip ep"><i class="u">PATCH</i>/api/settings/system</span><span class="chip ep"><i class="g">GET</i>/api/reports/conversations</span><span class="chip ep"><i class="g">GET</i>/api/reports/chatbot-usage</span><span class="chip ep"><i class="g">GET</i>/api/payment/config</span><span class="chip ep"><i class="p">POST</i>/api/payment/create-order</span><span class="chip ep"><i class="p">POST</i>/api/payment/verify</span><span class="chip ep"><i class="g">GET</i>/api/payment/history</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">admin/api/admin_router.py</span><span class="chip fl plan">admin/routers/voice_quota.py · planned</span><span class="chip fl plan">admin/routers/billing.py · planned</span><span class="chip fl plan">admin/routers/settings.py · planned</span><span class="chip fl plan">admin/routers/portal.py · planned</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">AI Intelligence</span>
+<span class="badge pfx">/admin/api/ai</span>
+<span class="badge cnt">9 API</span>
+<span class="badge utl">Analytics</span></div>
+<div class="muses">Conversation analytics &amp; user feedback</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="g">GET</i>/analytics</span><span class="chip ep"><i class="g">GET</i>/sentiment-stats</span><span class="chip ep"><i class="g">GET</i>/topic-stats</span><span class="chip ep"><i class="g">GET</i>/summaries</span><span class="chip ep"><i class="g">GET</i>/summary/{session_id}</span><span class="chip ep"><i class="p">POST</i>/api/ai/session-end</span><span class="chip ep"><i class="p">POST</i>/api/ai/feedback</span><span class="chip ep"><i class="p">POST</i>/feedback</span><span class="chip ep"><i class="g">GET</i>/feedback-stats</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">api/ai_intelligence_router.py</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Master Config · Receiver</span>
+<span class="badge pfx">/api/master</span>
+<span class="badge cnt">6 API</span>
+<span class="badge utl">Master control · self-host side</span></div>
+<div class="muses">Receive config/credential push, report usage &amp; health</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="p">POST</i>/config</span><span class="chip ep"><i class="g">GET</i>/usage</span><span class="chip ep"><i class="p">POST</i>/restart</span><span class="chip ep"><i class="g">GET</i>/credentials</span><span class="chip ep"><i class="p">POST</i>/credentials</span><span class="chip ep"><i class="g">GET</i>/health-detail</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">api/master_config_receiver.py</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Master Config · Portal</span>
+<span class="badge pfx">/api/master</span>
+<span class="badge cnt">4 API</span>
+<span class="badge utl">Master control · portal side</span></div>
+<div class="muses">Push config, read usage, create entries</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="p">POST</i>/config</span><span class="chip ep"><i class="g">GET</i>/config</span><span class="chip ep"><i class="g">GET</i>/usage</span><span class="chip ep"><i class="p">POST</i>/create</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">api/master_config.py</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Master Admin Bridge</span>
+<span class="badge pfx">/api/master/admin</span>
+<span class="badge cnt">22 API</span>
+<span class="badge utl">Master control · bridge</span></div>
+<div class="muses">Run admin operations remotely from the master portal</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="g">GET</i>/users</span><span class="chip ep"><i class="p">POST</i>/users</span><span class="chip ep"><i class="u">PATCH</i>/users/{user_id}</span><span class="chip ep"><i class="d">DELETE</i>/users/{user_id}</span><span class="chip ep"><i class="g">GET</i>/bots</span><span class="chip ep"><i class="p">POST</i>/bots</span><span class="chip ep"><i class="u">PATCH</i>/bots/{category}</span><span class="chip ep"><i class="d">DELETE</i>/bots/{category}</span><span class="chip ep"><i class="g">GET</i>/prompts/{category}</span><span class="chip ep"><i class="u">PATCH</i>/prompts/{category}</span><span class="chip ep"><i class="g">GET</i>/voice-quota</span><span class="chip ep"><i class="u">PATCH</i>/voice-quota/{user_id}</span><span class="chip ep"><i class="p">POST</i>/voice-quota/{user_id}/reset</span><span class="chip ep"><i class="g">GET</i>/sessions</span><span class="chip ep"><i class="p">POST</i>/sessions/{session_id}/kill</span><span class="chip ep"><i class="p">POST</i>/sessions/kill-all</span><span class="chip ep"><i class="g">GET</i>/settings/system</span><span class="chip ep"><i class="u">PATCH</i>/settings/system</span><span class="chip ep"><i class="g">GET</i>/reports/conversations</span><span class="chip ep"><i class="p">POST</i>/bots/setup-db</span><span class="chip ep"><i class="g">GET</i>/bots/{category}/uploaded-files</span><span class="chip ep"><i class="d">DELETE</i>/bots/{category}/uploaded-files/{file_name}</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">api/master_admin_bridge.py</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Chat & Voice (WebSocket)</span>
+<span class="badge pfx">(ws)</span>
+<span class="badge cnt">2 API</span>
+<span class="badge utl">LLM + Voice · not HTTP rate-limited</span></div>
+<div class="muses">Live conversational chat and live speech</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="w">WEBSOCKET</i>/ws/chat</span><span class="chip ep"><i class="w">WEBSOCKET</i>/ws/stt-fast</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">api/websocket.py</span><span class="chip fl">audio/call_session.py</span><span class="chip fl">audio/base.py</span><span class="chip fl">audio/llm_receiver.py</span><span class="chip fl">audio/stt_handler.py</span><span class="chip fl">audio/tts_handler.py</span><span class="chip fl">audio/language_detector.py</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Vision / OCR</span>
+<span class="badge pfx">(vision)</span>
+<span class="badge cnt">4 API</span>
+<span class="badge utl">OCR + Gemini vision</span></div>
+<div class="muses">Image &amp; document question-answering</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="p">POST</i>/ask-vision</span><span class="chip ep"><i class="w">WEBSOCKET</i>/ws-ask-vision</span><span class="chip ep"><i class="g">GET</i>/conversation/{session_id}</span><span class="chip ep"><i class="g">GET</i>/session-images/{session_id}</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">image/router.py</span><span class="chip fl">image/ocr_service.py</span><span class="chip fl">image/vision_service.py</span><span class="chip fl">image/image_cleanup.py</span></div>
+</div>
+<div class="mcard">
+<div class="mh"><span class="mname">Core / Pages</span>
+<span class="badge pfx">(root)</span>
+<span class="badge cnt">18 API</span>
+<span class="badge utl">Core app</span></div>
+<div class="muses">Serve UI pages, health, feature flags, current-user, routing</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep"><i class="g">GET</i>/api/feature-flags</span><span class="chip ep"><i class="g">GET</i>/</span><span class="chip ep"><i class="g">GET</i>/login</span><span class="chip ep"><i class="g">GET</i>/choose</span><span class="chip ep"><i class="g">GET</i>/choose/{slug}</span><span class="chip ep"><i class="g">GET</i>/change-password</span><span class="chip ep"><i class="g">GET</i>/chat</span><span class="chip ep"><i class="g">GET</i>/chat/{chatbot_code}</span><span class="chip ep"><i class="g">GET</i>/api/chat-config/{slug}</span><span class="chip ep"><i class="g">GET</i>/health</span><span class="chip ep"><i class="g">GET</i>/api/debug-audio</span><span class="chip ep"><i class="g">GET</i>/db</span><span class="chip ep"><i class="g">GET</i>/forgot-password</span><span class="chip ep"><i class="g">GET</i>/reset-password</span><span class="chip ep"><i class="g">GET</i>/test-email</span><span class="chip ep"><i class="g">GET</i>/session-config</span><span class="chip ep"><i class="p">POST</i>/api/choose</span><span class="chip ep"><i class="g">GET</i>/api/me</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">api/main.py</span><span class="chip fl">api/me.py</span><span class="chip fl">api/choose.py</span><span class="chip fl">api/session_config_endpoint.py</span></div>
+</div>
+<div class="mcard eng">
+<div class="mh"><span class="mname">LLM engine</span>
+<span class="badge pfx">internal</span>
+<span class="badge cnt">— API</span>
+<span class="badge utl">gemini-2.5-flash + streaming</span></div>
+<div class="muses">Generate chat answers</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep">via /ws/chat</span><span class="chip ep">via /ask-vision</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">core/llm_engine/dynamic_llm_provider.py</span><span class="chip fl">core/llm_engine/gemini/gemini_provider.py</span><span class="chip fl">audio/llm_receiver.py</span></div>
+</div>
+<div class="mcard eng">
+<div class="mh"><span class="mname">STT engine</span>
+<span class="badge pfx">internal</span>
+<span class="badge cnt">— API</span>
+<span class="badge utl">Sarvam (+ Deepgram / Azure / Google / AssemblyAI)</span></div>
+<div class="muses">Speech → text</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep">via /ws/stt-fast</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">audio/stt_handler.py</span><span class="chip fl">audio/stt/dynamic_stt_provider.py</span><span class="chip fl">audio/stt/Sarvam/sarvam_provider.py</span><span class="chip fl">audio/stt/Sarvam/sarvam_streaming.py</span><span class="chip fl">audio/stt/Sarvam/sarvam_transcribe.py</span><span class="chip fl">audio/stt/Deepgram/deepgram_streaming.py</span><span class="chip fl">audio/stt/Azure/azure_streaming.py</span><span class="chip fl">audio/stt/Google/google_streaming.py</span><span class="chip fl">audio/stt/AssemblyAI/assemblyai_streaming.py</span></div>
+</div>
+<div class="mcard eng">
+<div class="mh"><span class="mname">TTS engine</span>
+<span class="badge pfx">internal</span>
+<span class="badge cnt">— API</span>
+<span class="badge utl">Sarvam voice output</span></div>
+<div class="muses">Text → speech</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep">via /ws/stt-fast</span><span class="chip ep">via /ws/chat</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">audio/tts_handler.py</span><span class="chip fl">audio/tts/dynamic_tts_provider.py</span></div>
+</div>
+<div class="mcard eng">
+<div class="mh"><span class="mname">RAG / Embeddings</span>
+<span class="badge pfx">internal</span>
+<span class="badge cnt">— API</span>
+<span class="badge utl">pgvector similarity search</span></div>
+<div class="muses">Retrieve context for answers</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep">via /ws/chat</span><span class="chip ep">via upload-documents</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">core/rag_engine.py</span><span class="chip fl">core/rag_retrieve.py</span><span class="chip fl">core/vector_store.py</span><span class="chip fl">core/embedding.py</span><span class="chip fl">chunking_engine/contextual_chunking.py</span></div>
+</div>
+<div class="mcard eng">
+<div class="mh"><span class="mname">OCR</span>
+<span class="badge pfx">internal</span>
+<span class="badge cnt">— API</span>
+<span class="badge utl">Document ingest</span></div>
+<div class="muses">Extract text from images / PDF</div>
+<div class="mlabel">Endpoint URLs</div><div class="chips"><span class="chip ep">via /ask-vision</span><span class="chip ep">via upload-documents</span></div>
+<div class="mlabel">Related .py files &amp; locations</div><div class="chips"><span class="chip fl">image/ocr_service.py</span><span class="chip fl">image/image_cleanup.py</span></div>
+</div>
+</div>
+<div class="note" style="margin-top:16px"><span class="l">Note on prefixes</span>Full URL = module prefix + endpoint path (e.g. Admin Portal <code>/admin</code> + <code>/api/users</code> = <code>/admin/api/users</code>). Engine modules have no HTTP prefix — they run internally and are reached through the chat, voice, and vision endpoints listed on their cards.</div>
+</div></section>
+
+<footer><div class="wrap">API inventory · generated from the live codebase · 138 endpoints · 12 files · 16 modules</div></footer>
+<script>
+const inp=document.getElementById('flt');
+if(inp){inp.addEventListener('input',()=>{const q=inp.value.toLowerCase();
+document.querySelectorAll('#t1 tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});});}
+</script>
+</body></html>

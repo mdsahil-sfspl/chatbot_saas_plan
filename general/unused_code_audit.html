@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unused Code Audit — Sampurna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1320; --panel:#141B2B; --panel2:#172033; --ink:#EAEEF6; --muted:#9AA6BC; --faint:#6E7A92;
+    --line:#222C40; --line2:#2C3650;
+    --green:#46C98B; --green-d:#1C7A53; --green-bg:#13261F;
+    --blue:#5B8DEF; --blue-bg:#142036; --blue-ln:#2A3E66;
+    --teal:#34C6C0; --teal-bg:#11272B;
+    --amber:#E0A537; --amber-bg:#2A2113; --amber-ln:#5A4413;
+    --red:#E5705F; --red-bg:#2A1715; --red-ln:#5A2A22;
+    --violet:#9B8CFF; --violet-bg:#1B1830; --violet-ln:#3A3168;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+    --shadow:0 12px 34px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1000px 460px at 82% -8%,rgba(224,165,55,.09),transparent 60%),
+      radial-gradient(820px 460px at -8% 8%,rgba(155,140,255,.07),transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+  code{font-family:var(--mono);font-size:.85em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .wrap{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 22px}
+  .topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-right:auto}
+  .topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+  .topnav a:hover{background:#1A2336;color:var(--ink)}
+
+  .hero{padding:56px 0 20px}
+  .kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:600;border:1px solid var(--amber);border-radius:30px;padding:5px 13px;background:var(--amber-bg)}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;margin:16px 0 12px}
+  h1 .g{background:linear-gradient(90deg,#E0A537,#9B8CFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:18px;color:#C2CCDE;max-width:770px;margin:0}
+  .lede b{color:#fff}
+
+  .stats{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 6px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow)}
+  .stat b{font-family:var(--disp);font-size:22px;color:#fff;display:block}
+  .stat span{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+  .note{margin:16px 0;border-radius:11px;padding:12px 15px;font-size:13.5px;line-height:1.55}
+  .note.tip{background:var(--blue-bg);border:1px solid var(--blue-ln);color:#C9D7F2}
+  .note.warn{background:var(--amber-bg);border:1px solid var(--amber-ln);color:#EAD8A8}
+  .note .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px}
+  .note.tip .l{color:var(--blue)} .note.warn .l{color:var(--amber)}
+  .note b{color:#fff}
+
+  .sec{padding:34px 0 4px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.3vw,28px);margin:8px 0 4px;color:#fff}
+  .sec .sub{color:var(--muted);margin:0;max-width:770px}
+
+  .cardhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 2px}
+  .badge{font-family:var(--mono);font-weight:600;font-size:11px;padding:4px 11px;border-radius:9px}
+  .badge.dead{background:var(--red);color:#0E1320} .badge.script{background:var(--blue);color:#0E1320} .badge.verify{background:var(--violet);color:#0E1320}
+  .cardhead h3{font-family:var(--disp);font-weight:600;font-size:18px;margin:0;color:#fff}
+  .cardhead .sum{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:3px 10px}
+
+  table{border-collapse:collapse;width:100%;font-size:12.7px;margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#172033}
+  td.e{font-family:var(--mono);color:#A9C2F2}
+  td.ln{font-family:var(--mono);color:var(--amber);text-align:right;font-weight:600;white-space:nowrap}
+  td.why{color:#B7C2D6}
+
+  .big{background:linear-gradient(180deg,rgba(229,112,95,.06),var(--panel));border:1px solid var(--red-ln);border-radius:16px;padding:18px 20px;margin-top:10px;box-shadow:var(--shadow)}
+  .big .n{font-family:var(--disp);font-size:26px;color:#fff;font-weight:700}
+  .big .n span{font-size:14px;color:var(--amber);font-family:var(--mono);font-weight:600}
+  .big p{margin:6px 0 0;color:#CAD4E6;font-size:14px}
+  .flist{margin:10px 0 0;font-family:var(--mono);font-size:11px;color:#C9D3E6;line-height:1.9}
+  .flist .x{color:var(--red)}
+
+  .total{background:linear-gradient(160deg,#241a12,#0c1422);border:1px solid var(--amber-ln);border-radius:18px;padding:22px 26px;margin:20px 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .total .big2{font-family:var(--disp);font-size:40px;font-weight:700;color:#fff;line-height:1}
+  .total .big2 span{display:block;font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
+  .total p{margin:0;color:#CAD4E6;font-size:14px;max-width:560px}
+
+  .check{background:linear-gradient(160deg,#101a2e,#0c1422);border:1px solid var(--line2);border-radius:18px;padding:24px 26px;margin:18px 0}
+  .check .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:12px}
+  .check ul{margin:0;padding:0;list-style:none}
+  .check li{position:relative;padding:7px 0 7px 30px;font-size:14px;color:#CAD4E6;border-top:1px solid var(--line)}
+  .check li:first-child{border-top:none}
+  .check li::before{content:"";position:absolute;left:2px;top:11px;width:13px;height:13px;border-radius:4px;border:1.5px solid var(--teal)}
+  .check b{color:#fff}
+
+  footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:26px}
+  @media(max-width:760px){.topnav a:nth-child(n+5){display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">Unused Code Audit</span>
+  <a href="#dead">Dead modules</a>
+  <a href="#chunk">Chunking</a>
+  <a href="#scripts">Scripts</a>
+  <a href="#verify">Verify</a>
+  <a href="#total">Total</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kchip">● Whole-repo scan · modules nothing imports</span>
+  <h1>Unused code audit — <span class="g">what you can safely remove</span></h1>
+  <p class="lede">A scan of every <code>.py</code> file for modules that <b>nothing imports and nothing wires into the app</b>. The result: roughly <b>4,500 lines of dead code across ~37 modules</b> — leftover patches, superseded engines, unmounted routers, and one-off scripts.</p>
+  <div class="stats">
+    <div class="stat"><b>37</b><span>Orphan modules</span></div>
+    <div class="stat"><b>~4,500</b><span>Dead lines</span></div>
+    <div class="stat"><b>15</b><span>Dead app modules</span></div>
+    <div class="stat"><b>12</b><span>Dead chunkers</span></div>
+    <div class="stat"><b>2</b><span>To verify</span></div>
+  </div>
+  <div class="note tip"><span class="l">How this was determined</span>A module is flagged when <b>no other file imports it</b> <i>and</i> it isn't wired into the running app (not in <code>include_router</code>, not applied as a patch). The ambiguous ones were checked by hand — e.g. <code>tts_handler</code> pulls from <code>config_store</code>/<code>dynamic_config</code>, not the dead <code>dynamic_tts_provider</code>. Two genuinely ambiguous files are in a separate <b>Verify</b> tier, not the delete list.</div>
+</div></header>
+
+<!-- DEAD MODULES -->
+<section class="sec" id="dead"><div class="wrap">
+  <div class="seclabel">Tier 1 · confirmed dead</div>
+  <div class="cardhead"><span class="badge dead">Delete</span><h3>Dead application modules</h3><span class="sum">~1,220 lines · 15 files</span></div>
+  <p class="sub">Imported by nothing and superseded by a live equivalent. Safe to remove.</p>
+  <table>
+    <thead><tr><th>File</th><th>Lines</th><th>Why it's dead</th></tr></thead>
+    <tbody>
+      <tr><td class="e">api/patch_main.py</td><td class="ln">101</td><td class="why">Leftover patch file — never imported or applied</td></tr>
+      <tr><td class="e">api/session_auth_patch.py</td><td class="ln">70</td><td class="why">Leftover patch file — never imported or applied</td></tr>
+      <tr><td class="e">core/fast_quota_enforcer.py</td><td class="ln">188</td><td class="why">Superseded by <code>core/usage_limiter.py</code></td></tr>
+      <tr><td class="e">core/session_manager.py</td><td class="ln">140</td><td class="why">Session handling lives in <code>session_auth</code> + Redis</td></tr>
+      <tr><td class="e">api/session_tracker.py</td><td class="ln">124</td><td class="why">Unused — no importers</td></tr>
+      <tr><td class="e">core/rag_retrieve.py</td><td class="ln">63</td><td class="why">Retrieval is implemented inside <code>rag_engine.py</code></td></tr>
+      <tr><td class="e">core/workflow.py</td><td class="ln">48</td><td class="why">Unused workflow module — not wired</td></tr>
+      <tr><td class="e">config/support_kb.py</td><td class="ln">32</td><td class="why">Unused config — no importers</td></tr>
+      <tr><td class="e">api/session_config_endpoint.py</td><td class="ln">23</td><td class="why">Unmounted router — <code>/session-config</code> is served elsewhere</td></tr>
+      <tr><td class="e">audio/call_session.py</td><td class="ln">20</td><td class="why">Unused — WebSocket manages its own session</td></tr>
+      <tr><td class="e">core/supabase_client.py</td><td class="ln">1</td><td class="why">Empty stub — app talks to Postgres via asyncpg</td></tr>
+      <tr><td class="e">audio/tts/dynamic_tts_provider.py</td><td class="ln">310</td><td class="why">Not used — <code>tts_handler</code> reads config directly</td></tr>
+      <tr><td class="e">audio/stt/Sarvam/sarvam_transcribe.py</td><td class="ln">91</td><td class="why">Non-streaming variant — the streaming provider is live</td></tr>
+      <tr><td class="e">api/test_search_function.py</td><td class="ln">6</td><td class="why">Stray dev test in a prod dir</td></tr>
+      <tr><td class="e">core/test_search_function.py</td><td class="ln">6</td><td class="why">Stray dev test in a prod dir</td></tr>
+    </tbody>
+  </table>
+  <div class="note warn"><span class="l">Nice side effect</span>Two of these — <code>patch_main</code> and <code>session_auth_patch</code> — are "patch" leftovers that suggest fixes were once bolted on outside the real files. Removing them ends the confusion about which version is authoritative.</div>
+</div></section>
+
+<!-- CHUNKING -->
+<section class="sec" id="chunk"><div class="wrap">
+  <div class="seclabel">Tier 1 · confirmed dead</div>
+  <div class="cardhead"><span class="badge dead">Delete</span><h3>Dead chunking engine</h3><span class="sum">2,790 lines · 12 files</span></div>
+  <p class="sub">Only <code>contextual_chunking.py</code> is used. Every other strategy and uploader is imported by nothing.</p>
+  <div class="big">
+    <div class="n">2,790 <span>lines across 12 files</span></div>
+    <div class="flist">
+      <span class="x">Early_ · Late_ · Paragraph_based_ · Recursive_ · Row_Based_ · Semantic_ · Sentence_Based_ · Sliding_Window_ · fixed_size_</span>Chunking.py<br>
+      <span class="x">upload_excel_fast.py · upload_hr_data.py · upload_it_data.py</span>
+    </div>
+    <p>Bonus: these dead chunkers are where most of the stray <code>text-embedding-004</code> (768-d) references live — deleting them also removes most of the embedding-model confusion flagged in the AI-optimization task.</p>
+  </div>
+</div></section>
+
+<!-- SCRIPTS -->
+<section class="sec" id="scripts"><div class="wrap">
+  <div class="seclabel">Tier 2 · one-off scripts</div>
+  <div class="cardhead"><span class="badge script">Relocate or delete</span><h3>Migration &amp; utility scripts</h3><span class="sum">~515 lines · 8 files</span></div>
+  <p class="sub">Not part of the running app — they're run by hand. Move them to a <code>scripts/</code> folder (out of the app packages) or delete if the migration is already done.</p>
+  <table>
+    <thead><tr><th>File</th><th>Lines</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td class="e">admin/api/update_user_fields_from_excel.py</td><td class="ln">140</td><td class="why">One-off Excel import — <b>and a drifted near-duplicate of the one below</b></td></tr>
+      <tr><td class="e">tools/scripts/update_user_fields_from_excel.py</td><td class="ln">126</td><td class="why">Second copy of the same script — the two now <b>differ</b> (126 vs 140 lines)</td></tr>
+      <tr><td class="e">api/hash_all_passwords.py</td><td class="ln">107</td><td class="why">One-time password re-hash migration</td></tr>
+      <tr><td class="e">api/database_embeddings_change.py</td><td class="ln">75</td><td class="why">One-time embeddings migration script</td></tr>
+      <tr><td class="e">tools/daily_voice_reset.py</td><td class="ln">45</td><td class="why">Cron-style script — belongs in scripts/ or a scheduler</td></tr>
+      <tr><td class="e">tools/fix_json.py</td><td class="ln">9</td><td class="why">Ad-hoc fixer</td></tr>
+      <tr><td class="e">tools/view_memory.py</td><td class="ln">9</td><td class="why">Ad-hoc inspector</td></tr>
+      <tr><td class="e">tools/export_redis_data.py</td><td class="ln">4</td><td class="why">Ad-hoc export snippet</td></tr>
+    </tbody>
+  </table>
+  <div class="note warn"><span class="l">The duplicate is a real trap</span>Having <code>update_user_fields_from_excel.py</code> in <b>two places with different contents</b> means a future edit could land in the wrong copy. Keep one, delete the other, and put it in <code>scripts/</code>.</div>
+</div></section>
+
+<!-- VERIFY -->
+<section class="sec" id="verify"><div class="wrap">
+  <div class="seclabel">Tier 3 · verify before removing</div>
+  <div class="cardhead"><span class="badge verify">Verify first</span><h3>Looks unused — but confirm</h3><span class="sum">~77 lines · 2 files</span></div>
+  <p class="sub">These have zero importers, but a live-looking reference means I won't call them dead without your confirmation.</p>
+  <table>
+    <thead><tr><th>File</th><th>Lines</th><th>Why verify, not delete</th></tr></thead>
+    <tbody>
+      <tr><td class="e">api/choose.py</td><td class="ln">56</td><td class="why">Its router isn't in <code>include_router</code> and nothing imports it — <b>but</b> the admin portal links to <code>/choose/{slug}</code>. Confirm that page is served elsewhere (e.g. <code>main.py</code>) before deleting.</td></tr>
+      <tr><td class="e">audio/language_detector.py</td><td class="ln">21</td><td class="why">Zero importers; <code>audio/stt/Sarvam/sarvam_lang_detect.py</code> looks like the live one. Confirm which is used, then remove the other.</td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- TOTAL -->
+<section class="sec" id="total"><div class="wrap">
+  <div class="seclabel">The payoff</div>
+  <h2>What you get back</h2>
+  <div class="total">
+    <div class="big2">~4,500<span>lines removable</span></div>
+    <p>Across ~35 confirmed-dead files (plus 2 to verify). That's less code to read, secure, test, and onboard new developers into — with <b>zero behaviour change</b>, because the app never imports any of it.</p>
+  </div>
+  <div class="note tip"><span class="l">How to remove it safely</span>Do it on a branch: delete the Tier-1 files, then boot the app and run a smoke test. Because nothing imports them, an import error would surface immediately if something was missed. Relocate the Tier-2 scripts to <code>scripts/</code>. Resolve the two Tier-3 files by hand. Commit in small, labelled batches so anything can be reverted cleanly.</div>
+  <div class="check">
+    <div class="k">Done when</div>
+    <ul>
+      <li>The <b>15 dead app modules</b> and <b>12 dead chunkers</b> are deleted; the app boots and passes a smoke test.</li>
+      <li>The <b>patch leftovers</b> (<code>patch_main</code>, <code>session_auth_patch</code>) are gone, so there's one authoritative version of each file.</li>
+      <li>One-off scripts live in <code>scripts/</code>, and the <b>duplicated</b> <code>update_user_fields_from_excel.py</code> is down to a single copy.</li>
+      <li>The 2 verify-first files are confirmed and either kept or removed — no lingering "maybe dead" modules.</li>
+      <li>A <code>.gitignore</code> / lint rule discourages new stray scripts and <code>*_patch.py</code> files from creeping back.</li>
+    </ul>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Unused code audit · whole-repo scan · ~4,500 lines across ~37 modules · nothing imports them</div></footer>
+
+</body>
+</html>

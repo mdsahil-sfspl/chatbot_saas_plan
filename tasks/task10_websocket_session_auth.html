@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 10 — Refactor WebSocket + session_auth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1320; --panel:#141B2B; --panel2:#172033; --ink:#EAEEF6; --muted:#9AA6BC; --faint:#6E7A92;
+    --line:#222C40; --line2:#2C3650;
+    --green:#46C98B; --green-d:#1C7A53; --green-bg:#13261F;
+    --blue:#5B8DEF; --blue-bg:#142036; --blue-ln:#2A3E66;
+    --teal:#34C6C0; --teal-bg:#11272B; --teal-ln:#1C5F5C;
+    --amber:#E0A537; --amber-bg:#2A2113; --amber-ln:#5A4413;
+    --red:#E5705F; --red-bg:#2A1715; --red-ln:#5A2A22;
+    --violet:#9B8CFF; --violet-bg:#1B1830; --violet-ln:#3A3168;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+    --shadow:0 12px 34px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1000px 460px at 82% -8%,rgba(91,141,239,.10),transparent 60%),
+      radial-gradient(820px 460px at -8% 8%,rgba(229,112,95,.07),transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+  code{font-family:var(--mono);font-size:.85em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .wrap{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 22px}
+  .topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-right:auto}
+  .topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+  .topnav a:hover{background:#1A2336;color:var(--ink)}
+
+  .hero{padding:56px 0 20px}
+  .kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:600;border:1px solid var(--blue);border-radius:30px;padding:5px 13px;background:var(--blue-bg)}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;margin:16px 0 12px}
+  h1 .g{background:linear-gradient(90deg,#5B8DEF,#E5705F);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:18px;color:#C2CCDE;max-width:780px;margin:0}
+  .lede b{color:#fff}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:26px 0 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 16px}
+  .stat .n{font-family:var(--disp);font-size:26px;font-weight:700;color:#fff;line-height:1}
+  .stat .l{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+  .stat.r .n{color:var(--red)} .stat.a .n{color:var(--amber)}
+
+  .sec{padding:42px 0 4px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.3vw,29px);letter-spacing:-.01em;margin:8px 0 4px;color:#fff}
+  .sec .sub{color:var(--muted);margin:0;max-width:780px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px 24px;margin:18px 0}
+  .now{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+  .now .it{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#C7D2E6}
+  .now .it .b{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:11px;white-space:nowrap;margin-top:1px}
+  .b.bad{background:var(--red-bg);color:var(--red);border:1px solid var(--red-ln)}
+  .b.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
+  .b.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-d)}
+
+  .figure{background:#0B1018;border:1px solid var(--line2);border-radius:14px;padding:16px;margin:14px 0}
+  .figure svg{display:block;width:100%;height:auto}
+  .figcap{font-family:var(--mono);font-size:10.5px;color:var(--faint);text-align:center;margin-top:8px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin:18px 0;overflow:hidden}
+  .card .head{padding:18px 22px 12px;border-bottom:1px solid var(--line)}
+  .card.p1 .head{background:linear-gradient(180deg,rgba(229,112,95,.07),transparent)}
+  .card.p2 .head{background:linear-gradient(180deg,rgba(91,141,239,.06),transparent)}
+  .card.p3 .head{background:linear-gradient(180deg,rgba(52,198,192,.06),transparent)}
+  .card.p4 .head{background:linear-gradient(180deg,rgba(155,140,255,.06),transparent)}
+  .card .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-weight:600;font-size:12px;color:#0E1320;padding:4px 10px;border-radius:9px}
+  .card.p1 .tag{background:var(--red)} .card.p2 .tag{background:var(--blue)} .card.p3 .tag{background:var(--teal)} .card.p4 .tag{background:var(--violet)}
+  .card h3{font-family:var(--disp);font-weight:600;font-size:19px;margin:0;color:#fff;letter-spacing:-.01em}
+  .meta{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:3px 10px}
+  .files{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+  .files .file{font-family:var(--mono);font-size:10.5px;color:#9FE3D0;background:var(--green-bg);border:1px solid var(--green-d);border-radius:6px;padding:3px 8px}
+  .body{padding:12px 22px 20px}
+  .body p{margin:0 0 10px;color:#C7D2E6;font-size:14.5px}
+  ol.steps{margin:6px 0 0;padding:0;list-style:none;counter-reset:st}
+  ol.steps>li{counter-increment:st;position:relative;padding:0 0 14px 32px;font-size:14.5px;color:#CAD4E6}
+  ol.steps>li::before{content:counter(st);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:7px;background:#1C2538;border:1px solid var(--line2);color:var(--blue);font-family:var(--mono);font-size:11px;font-weight:600;display:grid;place-items:center}
+  ol.steps>li b{color:#fff}
+
+  pre.code{margin:10px 0 2px;background:#0B1018;border:1px solid var(--line2);border-radius:11px;padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:12.1px;line-height:1.66;color:#D7E0F0}
+  pre.code .c{color:#5C7B6B} pre.code .k{color:#7FA6F0} pre.code .s{color:#8FD8B0} pre.code .f{color:#E0A537} pre.code .r{color:#E5705F} pre.code .n{color:#C99BF0}
+  .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--faint);margin:12px 0 2px;display:block}
+
+  .note{margin:12px 0 2px;border-radius:11px;padding:11px 14px;font-size:13.5px;line-height:1.55}
+  .note.tip{background:var(--blue-bg);border:1px solid var(--blue-ln);color:#C9D7F2}
+  .note.warn{background:var(--amber-bg);border:1px solid var(--amber-ln);color:#EAD8A8}
+  .note.bad{background:var(--red-bg);border:1px solid var(--red-ln);color:#F2C9C1}
+  .note.good{background:var(--green-bg);border:1px solid var(--green-d);color:#CFEAD9}
+  .note .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px}
+  .note.tip .l{color:var(--blue)} .note.warn .l{color:var(--amber)} .note.bad .l{color:var(--red)} .note.good .l{color:var(--green)}
+  .note b{color:#fff}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+  .splitbox{border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .splitbox.bad{background:linear-gradient(180deg,rgba(229,112,95,.06),var(--panel));border:1px solid var(--red-ln)}
+  .splitbox.good{background:linear-gradient(180deg,rgba(70,201,139,.06),var(--panel));border:1px solid var(--green-d)}
+  .splitbox h3{font-family:var(--disp);font-weight:600;font-size:15px;margin:0 0 3px}
+  .splitbox.bad h3{color:#F2C9C1} .splitbox.good h3{color:#A9E9CC}
+  .splitbox .tagline{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-bottom:10px}
+  .splitbox ul{margin:0;padding-left:17px;font-size:13.4px;color:#C7D2E6}
+  .splitbox li{margin-bottom:5px}
+
+  table{border-collapse:collapse;width:100%;font-size:12.7px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td.e{font-family:var(--mono);color:#A9C2F2}
+  .pill{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:11px}
+  .p-new{background:var(--green-bg);color:var(--green)} .p-edit{background:var(--amber-bg);color:var(--amber)} .p-kill{background:var(--red-bg);color:var(--red)}
+
+  .check{background:linear-gradient(160deg,#101a2e,#0c1422);border:1px solid var(--line2);border-radius:18px;padding:24px 26px;margin:18px 0}
+  .check .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:12px}
+  .check ul{margin:0;padding:0;list-style:none}
+  .check li{position:relative;padding:7px 0 7px 30px;font-size:14px;color:#CAD4E6;border-top:1px solid var(--line)}
+  .check li:first-child{border-top:none}
+  .check li::before{content:"";position:absolute;left:2px;top:11px;width:13px;height:13px;border-radius:4px;border:1.5px solid var(--blue)}
+  .check b{color:#fff}
+
+  footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:26px}
+  @media(max-width:820px){.now,.split{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.meta{margin-left:0}.topnav a:nth-child(n+5){display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">Task 10 · WebSocket + session_auth</span>
+  <a href="#now">What's broken</a>
+  <a href="#shape">Target shape</a>
+  <a href="#do">The moves</a>
+  <a href="#table">Changes</a>
+  <a href="#done">Done when</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kchip">● P1 Stabilize · Dev B · runs with T8, T9 · depends on T3</span>
+  <h1>Task 10 — <span class="g">refactor WebSocket + session_auth</span></h1>
+  <p class="lede">Two files, 2,591 lines, doing about ten jobs between them. The refactor isn't cosmetic: reading the code, <b>your WebSockets never actually authenticate</b> — they accept the connection and then trust raw cookies as identity. And <code>session_auth.py</code> contains <b>two competing session stores</b>, both with in-memory fallbacks that silently break the moment you run more than one worker.</p>
+  <div class="stats">
+    <div class="stat"><div class="n">1,343</div><div class="l">lines in websocket.py</div></div>
+    <div class="stat"><div class="n">1,248</div><div class="l">lines in session_auth.py</div></div>
+    <div class="stat r"><div class="n">0</div><div class="l">ws auth checks</div></div>
+    <div class="stat a"><div class="n">2</div><div class="l">rival session stores</div></div>
+  </div>
+</div></header>
+
+<!-- WHAT'S BROKEN -->
+<section class="sec" id="now"><div class="wrap">
+  <div class="seclabel">What the code actually says</div>
+  <h2>Three real problems, not just untidy code</h2>
+  <p class="sub">Everything below is read straight out of your two files — this is why the task is P1 and not a nice-to-have.</p>
+
+  <div class="panel">
+    <div class="now">
+      <div class="it"><span class="b bad">security</span><span><b style="color:#fff">WebSockets trust cookies as identity.</b> <code>ws_stt_fast</code> reads <code>websocket.cookies.get("user_id")</code> and treats it as who you are. A cookie is client-controlled text — anyone can set it.</span></div>
+      <div class="it"><span class="b bad">security</span><span><b style="color:#fff"><code>ws_chat</code> has no auth at all.</b> It calls <code>websocket.accept()</code> and starts streaming. No token, no session check, no user.</span></div>
+      <div class="it"><span class="b warn">scaling</span><span><b style="color:#fff">Two session stores.</b> <code>_MEM_SESSIONS</code> (chat sessions) and <code>_MEM</code> (auth tokens) — separate dicts, separate Redis clients, same file.</span></div>
+      <div class="it"><span class="b warn">scaling</span><span><b style="color:#fff">In-memory fallback breaks multi-worker.</b> If <code>REDIS_URL</code> is unset, sessions live in one process's RAM — worker 2 can't see worker 1's login.</span></div>
+      <div class="it"><span class="b warn">size</span><span><b style="color:#fff">Two giant handlers.</b> <code>ws_chat</code> ≈ 320 lines, <code>ws_stt_fast</code> ≈ 670 lines — each mixing transport, auth, quota, language, LLM, and audio.</span></div>
+      <div class="it"><span class="b ok">good</span><span><b style="color:#fff">You already cap connections.</b> <code>_ws_acquire()</code> + <code>MAX_WS_CONNECTIONS</code> with a 1013 close is genuinely good practice — keep it.</span></div>
+    </div>
+  </div>
+
+  <div class="note bad"><span class="l">The one that matters most</span>In <code>ws_stt_fast</code>, identity comes from <code>websocket.cookies.get("user_id")</code> — and that value is used for <b>voice-quota accounting</b>. Anyone who can open a socket can set that cookie to any value: burn another user's quota, or dodge their own. This is not a refactor detail; it's an open door, and it's why Task 10 sits in P1. <b>Fixing it is the whole point of the task.</b></div>
+
+  <div class="note warn"><span class="l">Why "runs with T8, T9" and "depends on T3"</span>T3 (splitting the routers) has to land first so you're not refactoring a moving file. Once auth is centralised here, <b>Task 11 gets much easier</b> — the WebSocket tenant-context problem I flagged (sockets skip HTTP middleware) is solved for free, because there'll be exactly one place where a socket establishes identity.</div>
+</div></section>
+
+<!-- TARGET SHAPE -->
+<section class="sec" id="shape"><div class="wrap">
+  <div class="seclabel">The target shape</div>
+  <h2>One gate in, thin handlers behind it</h2>
+  <p class="sub">Today every socket does its own ad-hoc identity guessing from cookies. After the refactor, a single dependency authenticates <i>before</i> the socket is accepted, and the handlers only handle their own job.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 660 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Before: two websocket handlers each accept the connection then read raw cookies for identity. After: a single ws_auth dependency validates the session token before accept, and passes a verified user into thin handlers.">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+      <text x="20" y="22" font-family="JetBrains Mono" font-size="11" fill="#E5705F" font-weight="600">TODAY</text>
+      <rect x="20" y="34" width="96" height="34" rx="7" fill="#141B2B" stroke="#2C3650"/><text x="68" y="55" font-family="Inter" font-size="10.5" fill="#C7D2E6" text-anchor="middle">browser</text>
+      <line x1="116" y1="51" x2="150" y2="51" stroke="#E5705F" stroke-width="1.4" marker-end="url(#ar)"/>
+      <rect x="152" y="30" width="150" height="42" rx="8" fill="#2A1715" stroke="#5A2A22"/><text x="227" y="47" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#F2C9C1" text-anchor="middle">accept() first</text><text x="227" y="63" font-family="Inter" font-size="9.5" fill="#E5705F" text-anchor="middle">no token checked</text>
+      <line x1="302" y1="51" x2="336" y2="51" stroke="#E5705F" stroke-width="1.4" marker-end="url(#ar)"/>
+      <rect x="338" y="30" width="150" height="42" rx="8" fill="#2A1715" stroke="#5A2A22"/><text x="413" y="47" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#F2C9C1" text-anchor="middle">cookies.get(user_id)</text><text x="413" y="63" font-family="Inter" font-size="9.5" fill="#E5705F" text-anchor="middle">client-controlled = identity</text>
+      <line x1="488" y1="51" x2="522" y2="51" stroke="#E5705F" stroke-width="1.4" marker-end="url(#ar)"/>
+      <rect x="524" y="30" width="116" height="42" rx="8" fill="#0B1018" stroke="#5A2A22"/><text x="582" y="47" font-family="JetBrains Mono" font-size="9" fill="#F2C9C1" text-anchor="middle">quota + chat</text><text x="582" y="62" font-family="JetBrains Mono" font-size="8.5" fill="#E5705F" text-anchor="middle">as "that" user</text>
+
+      <line x1="20" y1="100" x2="640" y2="100" stroke="#222C40" stroke-width="1"/>
+
+      <text x="20" y="130" font-family="JetBrains Mono" font-size="11" fill="#46C98B" font-weight="600">AFTER TASK 10</text>
+      <rect x="20" y="142" width="96" height="34" rx="7" fill="#141B2B" stroke="#2C3650"/><text x="68" y="163" font-family="Inter" font-size="10.5" fill="#C7D2E6" text-anchor="middle">browser</text>
+      <line x1="116" y1="159" x2="150" y2="159" stroke="#46C98B" stroke-width="1.4" marker-end="url(#ar)"/>
+      <rect x="152" y="136" width="164" height="46" rx="8" fill="#13261F" stroke="#1C7A53"/><text x="234" y="155" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#A9E9CC" text-anchor="middle">ws_auth() dependency</text><text x="234" y="171" font-family="Inter" font-size="9.5" fill="#46C98B" text-anchor="middle">validate token → then accept</text>
+      <line x1="316" y1="159" x2="350" y2="159" stroke="#46C98B" stroke-width="1.4" marker-end="url(#ar)"/>
+      <rect x="352" y="136" width="140" height="46" rx="8" fill="#142036" stroke="#2A3E66"/><text x="422" y="155" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#C9D7F2" text-anchor="middle">verified user</text><text x="422" y="171" font-family="Inter" font-size="9.5" fill="#5B8DEF" text-anchor="middle">from session store</text>
+
+      <line x1="422" y1="182" x2="422" y2="206" stroke="#5B8DEF" stroke-width="1.4" marker-end="url(#ar)"/>
+      <rect x="330" y="208" width="94" height="34" rx="7" fill="#11272B" stroke="#1C5F5C"/><text x="377" y="229" font-family="JetBrains Mono" font-size="9" fill="#9FE3D0" text-anchor="middle">ws/chat</text>
+      <rect x="434" y="208" width="94" height="34" rx="7" fill="#11272B" stroke="#1C5F5C"/><text x="481" y="229" font-family="JetBrains Mono" font-size="9" fill="#9FE3D0" text-anchor="middle">ws/stt-fast</text>
+      <line x1="404" y1="196" x2="380" y2="206" stroke="#34C6C0" stroke-width="1.2" marker-end="url(#ar)"/>
+      <line x1="440" y1="196" x2="470" y2="206" stroke="#34C6C0" stroke-width="1.2" marker-end="url(#ar)"/>
+
+      <rect x="20" y="208" width="180" height="34" rx="7" fill="#1B1830" stroke="#3A3168"/><text x="110" y="229" font-family="Inter" font-size="10" fill="#C9C2F2" text-anchor="middle">one session store (Redis)</text>
+      <line x1="200" y1="225" x2="326" y2="225" stroke="#9B8CFF" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ar)"/>
+
+      <text x="330" y="272" font-family="Inter" font-size="10" fill="#6E7A92">Auth happens once, before accept — handlers stay thin</text>
+    </svg>
+    <div class="figcap">the gate moves in front of the door, instead of being guessed at afterwards</div>
+  </div>
+</div></section>
+
+<!-- THE MOVES -->
+<section class="sec" id="do"><div class="wrap">
+  <div class="seclabel">The work · four moves, in order</div>
+  <h2>What to change, where, how</h2>
+
+  <!-- MOVE 1 -->
+  <div class="card p1">
+    <div class="head">
+      <div class="row"><span class="tag">1</span><h3>Authenticate the socket <i>before</i> you accept it</h3><span class="meta">the security fix · do first</span></div>
+      <div class="files"><span class="file">api/websocket.py</span><span class="file">new: api/ws_auth.py</span></div>
+    </div>
+    <div class="body">
+      <p>Right now both sockets accept the connection and then read cookies. Invert it: validate the <b>session token</b> first, close with a policy code if it fails, and only then accept.</p>
+
+      <span class="lbl">Today — websocket.py line 327 &amp; ~676</span>
+      <pre class="code"><span class="c"># ws_chat — no auth at all</span>
+<span class="k">await</span> websocket.accept()
+session_id = f<span class="s">"sess_{uuid.uuid4().hex[:10]}"</span>
+bot_type = _valid_bot_type(websocket.cookies.get(<span class="s">"bot_type"</span>) <span class="k">or</span> <span class="s">"it"</span>)
+
+<span class="c"># ws_stt_fast — "identity" straight from a cookie</span>
+login_user_id = (websocket.cookies.get(<span class="s">"user_id"</span>) <span class="k">or</span> <span class="s">""</span>).strip()   <span class="r"># ← forgeable</span>
+quota_user_id = emp_id <span class="k">or</span> login_user_id                        <span class="r"># ← bills the wrong user</span></pre>
+
+      <span class="lbl">After — one shared gate (new file: api/ws_auth.py)</span>
+      <pre class="code"><span class="k">from</span> fastapi <span class="k">import</span> WebSocket
+<span class="k">from</span> api.sessions <span class="k">import</span> get_session          <span class="c"># the single store (move 2)</span>
+
+<span class="k">class</span> <span class="n">WSUser</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, user_id, bot_type, session_id, is_public=<span class="k">False</span>):
+        self.user_id, self.bot_type = user_id, bot_type
+        self.session_id, self.is_public = session_id, is_public
+
+<span class="k">async def</span> <span class="f">ws_authenticate</span>(websocket: WebSocket) -> WSUser | <span class="k">None</span>:
+    <span class="s">"""Validate BEFORE accept(). Returns None → caller closes 1008."""</span>
+    token = websocket.cookies.get(<span class="s">"session_token"</span>)     <span class="c"># signed, server-issued</span>
+    sess  = get_session(token) <span class="k">if</span> token <span class="k">else</span> <span class="k">None</span>
+    <span class="k">if</span> sess:
+        <span class="k">return</span> WSUser(sess[<span class="s">"user_id"</span>], sess.get(<span class="s">"selected_bot"</span>, <span class="s">"it"</span>), token)
+
+    <span class="c"># public chatbot path — allowed, but clearly marked as public</span>
+    pub = websocket.cookies.get(<span class="s">"pub_session_id"</span>)
+    <span class="k">if</span> pub <span class="k">and</span> <span class="k">await</span> is_valid_public_session(pub):
+        <span class="k">return</span> WSUser(f<span class="s">"pub:{pub}"</span>, <span class="s">"public"</span>, pub, is_public=<span class="k">True</span>)
+    <span class="k">return</span> <span class="k">None</span></pre>
+
+      <span class="lbl">Both handlers now start the same way</span>
+      <pre class="code"><span class="f">@router.websocket</span>(<span class="s">"/ws/chat"</span>)
+<span class="k">async def</span> <span class="f">ws_chat</span>(websocket: WebSocket):
+    <span class="k">if not await</span> _ws_acquire():                      <span class="c"># keep your capacity guard</span>
+        <span class="k">await</span> websocket.close(code=1013); <span class="k">return</span>
+
+    user = <span class="k">await</span> ws_authenticate(websocket)          <span class="c"># ← BEFORE accept</span>
+    <span class="k">if not</span> user:
+        <span class="k">await</span> websocket.close(code=1008, reason=<span class="s">"unauthorized"</span>)
+        _ws_release(); <span class="k">return</span>
+
+    <span class="k">await</span> websocket.accept()                          <span class="c"># only now</span>
+    <span class="c"># ... user.user_id is TRUSTED from here on</span></pre>
+
+      <div class="note bad"><span class="l">Why "before accept" matters</span>If you accept first and check later, you've already spent a connection slot and started the handshake — and every code path after that is one <code>return</code> away from running as an unauthenticated user. Closing with <b>1008 (policy violation)</b> before accept means the socket never exists for an unauthorized caller.</div>
+      <div class="note tip"><span class="l">Keep the public path — just label it</span>Your public chatbots legitimately have no login. Don't break them. The fix isn't "require login everywhere" — it's that a public user gets an <b>explicitly public identity</b> (<code>is_public=True</code>) derived from a server-issued <code>pub_session_id</code>, instead of quietly inheriting whatever <code>user_id</code> cookie the client sent.</div>
+    </div>
+  </div>
+
+  <!-- MOVE 2 -->
+  <div class="card p2">
+    <div class="head">
+      <div class="row"><span class="tag">2</span><h3>Collapse two session stores into one</h3><span class="meta">the scaling fix</span></div>
+      <div class="files"><span class="file">api/session_auth.py</span><span class="file">new: api/sessions.py</span></div>
+    </div>
+    <div class="body">
+      <p><code>session_auth.py</code> currently holds <b>two independent stores</b>, each with its own Redis client and its own in-memory dict. They don't know about each other.</p>
+
+      <span class="lbl">Today — the two rivals, same file</span>
+      <pre class="code"><span class="c"># line 61-62 — two separate in-memory dicts</span>
+_MEM_SESSIONS: dict[str, str] = {}          <span class="c"># chat session ids</span>
+_MEM: dict[str, dict[str, Any]] = {}        <span class="c"># auth tokens</span>
+
+<span class="c"># line 147 — a Redis client built per call</span>
+<span class="k">def</span> <span class="f">_redis_client</span>():
+    <span class="k">return</span> redis.Redis.from_url(REDIS_URL, decode_responses=<span class="k">True</span>)
+
+<span class="c"># line ~1174 — a DIFFERENT, module-level Redis client</span>
+_redis_global = redis.Redis.from_url(_ru, decode_responses=<span class="k">True</span>)</pre>
+
+      <div class="note warn"><span class="l">The multi-worker bug hiding in here</span>Both stores fall back to a plain Python <code>dict</code> when <code>REDIS_URL</code> is unset. A dict lives in <b>one process's memory</b>. The moment you run multiple uvicorn workers (or a second container), a user who logs in on worker 1 is a stranger to worker 2 — random logouts that are miserable to debug. For a multi-tenant SaaS this must be Redis, always.</div>
+
+      <span class="lbl">After — one store, one client, one TTL policy</span>
+      <pre class="code"><span class="c"># api/sessions.py (NEW) — the ONLY session store</span>
+_redis = redis.Redis.from_url(REDIS_URL, decode_responses=<span class="k">True</span>)
+
+<span class="k">def</span> <span class="f">create_session</span>(user_id, selected_bot=<span class="s">"it"</span>, tenant_id=<span class="k">None</span>) -> str:
+    token = secrets.token_urlsafe(32)
+    _redis.hset(f<span class="s">"session:{token}"</span>, mapping={
+        <span class="s">"user_id"</span>: user_id, <span class="s">"selected_bot"</span>: selected_bot,
+        <span class="s">"tenant_id"</span>: tenant_id <span class="k">or</span> <span class="s">""</span>,      <span class="c"># ← Task 11 plugs in here</span>
+        <span class="s">"created_at"</span>: int(time.time()),
+    })
+    _redis.expire(f<span class="s">"session:{token}"</span>, SESSION_TTL_SEC)
+    <span class="k">return</span> token
+
+<span class="k">def</span> <span class="f">get_session</span>(token) -> dict | <span class="k">None</span>:
+    <span class="k">return</span> _redis.hgetall(f<span class="s">"session:{token}"</span>) <span class="k">or</span> <span class="k">None</span>
+
+<span class="k">def</span> <span class="f">destroy_session</span>(token) -> <span class="k">None</span>:
+    _redis.delete(f<span class="s">"session:{token}"</span>)</pre>
+
+      <div class="note good"><span class="l">Free win for Task 11</span>Notice <code>tenant_id</code> in the session. Once it's here, the WebSocket tenant problem from Task 11 solves itself: <code>ws_authenticate()</code> returns the user <i>and</i> their tenant, so the socket can call <code>set_tenant()</code> + <code>ensure_tenant_pool()</code> at connect. That's exactly the gap I flagged — <b>this task closes it.</b></div>
+      <div class="note warn"><span class="l">Delete, don't keep</span><code>api/session_auth_patch.py</code> is a leftover patch file that imports the old <code>get_session</code>. Once the store is unified, it goes — it's part of the dead-code cleanup you already scoped.</div>
+    </div>
+  </div>
+
+  <!-- MOVE 3 -->
+  <div class="card p3">
+    <div class="head">
+      <div class="row"><span class="tag">3</span><h3>Break the two mega-handlers into layers</h3><span class="meta">the readability fix</span></div>
+      <div class="files"><span class="file">api/websocket.py → 4 files</span></div>
+    </div>
+    <div class="body">
+      <p><code>ws_stt_fast</code> alone is ~670 lines mixing transport, auth, quota, language detection, STT, LLM streaming and TTS. Nobody can safely change it. Split by <b>job</b>, not by line count.</p>
+
+      <div class="split">
+        <div class="splitbox bad">
+          <h3>Today — one file, everything</h3>
+          <div class="tagline">api/websocket.py · 1,343 lines</div>
+          <ul>
+            <li>connection limiting + heartbeat</li>
+            <li>cookie parsing pretending to be auth</li>
+            <li>language detection heuristics</li>
+            <li>voice-quota accounting</li>
+            <li>LLM token streaming</li>
+            <li>STT/TTS orchestration</li>
+            <li>disconnect + cleanup</li>
+          </ul>
+        </div>
+        <div class="splitbox good">
+          <h3>After — four files, one job each</h3>
+          <div class="tagline">clear seams, testable pieces</div>
+          <ul>
+            <li><code>ws_auth.py</code> — identity, before accept</li>
+            <li><code>ws_chat.py</code> — the chat socket, thin</li>
+            <li><code>ws_voice.py</code> — the STT socket, thin</li>
+            <li><code>ws_common.py</code> — capacity guard, heartbeat, safe-send, cleanup</li>
+          </ul>
+        </div>
+      </div>
+
+      <span class="lbl">The shape each handler should end up with</span>
+      <pre class="code"><span class="f">@router.websocket</span>(<span class="s">"/ws/stt-fast"</span>)
+<span class="k">async def</span> <span class="f">ws_stt_fast</span>(websocket: WebSocket):
+    <span class="k">async with</span> ws_connection(websocket) <span class="k">as</span> user:      <span class="c"># capacity + auth + accept</span>
+        <span class="k">if not await</span> quota.allows(user):                <span class="c"># quota is its own module</span>
+            <span class="k">await</span> ws_safe_send_text(websocket, {<span class="s">"type"</span>: <span class="s">"quota_exceeded"</span>})
+            <span class="k">return</span>
+        <span class="k">await</span> voice_pipeline.run(websocket, user)        <span class="c"># the actual work</span></pre>
+
+      <div class="note tip"><span class="l">Reuse what's already good</span><code>audio/stt_handler.py</code> already has <code>ws_safe_send_text()</code> and <code>ws_safe_close()</code> — the right helpers, already written. Move them into <code>ws_common.py</code> and use them everywhere, instead of scattered raw <code>send_json</code> calls that throw on a closed socket.</div>
+      <div class="note warn"><span class="l">Do this AFTER move 1</span>Land the auth fix first as a small, reviewable change. If you start by moving 1,300 lines around, the security fix gets buried in a diff nobody can read — and you'll be tempted to ship the refactor without the fix.</div>
+    </div>
+  </div>
+
+  <!-- MOVE 4 -->
+  <div class="card p4">
+    <div class="head">
+      <div class="row"><span class="tag">4</span><h3>Split session_auth.py by responsibility</h3><span class="meta">1,248 lines → 4 files</span></div>
+      <div class="files"><span class="file">api/session_auth.py</span></div>
+    </div>
+    <div class="body">
+      <p>The file is currently six unrelated things stacked together: session store, cookie helpers, login/password routes, chatbot selection, session-control DB rows, and usage reporting.</p>
+      <table>
+        <thead><tr><th>New file</th><th>What moves in</th><th>From (current lines)</th></tr></thead>
+        <tbody>
+          <tr><td class="e">api/sessions.py</td><td>the single Redis session store</td><td class="e">61-62, 147-199, 1167-1248</td></tr>
+          <tr><td class="e">api/auth_routes.py</td><td>login, change-password, forgot/reset, logout</td><td class="e">387-542, 942-1160</td></tr>
+          <tr><td class="e">api/session_control.py</td><td>_sc_create / _sc_touch / _sc_end / _sc_is_active</td><td class="e">240-356</td></tr>
+          <tr><td class="e">api/user_routes.py</td><td>/me, /chatbots, /select-bot, /heartbeat, /usage</td><td class="e">543-941, 1015-1061</td></tr>
+        </tbody>
+      </table>
+      <div class="note tip"><span class="l">Keep the rate limits</span>Your <code>@limiter.limit("3/minute")</code> on login and <code>1/5 minutes</code> on password reset are good — carry them over unchanged when the routes move. This is a move, not a rewrite.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- CHANGES TABLE -->
+<section class="sec" id="table"><div class="wrap">
+  <div class="seclabel">Reference</div>
+  <h2>Every change at a glance</h2>
+  <table>
+    <thead><tr><th>File</th><th>Today</th><th>After Task 10</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td class="e">api/ws_auth.py</td><td>—</td><td>validates token before accept; returns WSUser + tenant</td><td><span class="pill p-new">new</span></td></tr>
+      <tr><td class="e">api/sessions.py</td><td>—</td><td>the single Redis session store</td><td><span class="pill p-new">new</span></td></tr>
+      <tr><td class="e">api/ws_common.py</td><td>—</td><td>capacity guard, heartbeat, safe-send, cleanup</td><td><span class="pill p-new">new</span></td></tr>
+      <tr><td class="e">api/websocket.py</td><td>1,343 lines, 2 mega-handlers, no auth</td><td>splits into ws_chat.py + ws_voice.py, thin</td><td><span class="pill p-edit">split</span></td></tr>
+      <tr><td class="e">api/session_auth.py</td><td>1,248 lines, 6 jobs, 2 stores</td><td>splits into sessions / auth_routes / session_control / user_routes</td><td><span class="pill p-edit">split</span></td></tr>
+      <tr><td class="e">cookies.get("user_id")</td><td>trusted as identity</td><td>never trusted — identity comes from the session store</td><td><span class="pill p-kill">remove</span></td></tr>
+      <tr><td class="e">_MEM / _MEM_SESSIONS</td><td>in-memory fallback, breaks multi-worker</td><td>gone — Redis required</td><td><span class="pill p-kill">remove</span></td></tr>
+      <tr><td class="e">api/session_auth_patch.py</td><td>leftover patch file</td><td>deleted</td><td><span class="pill p-kill">delete</span></td></tr>
+      <tr><td class="e">_ws_acquire / MAX_WS_CONNECTIONS</td><td>working capacity guard</td><td><b>keep</b> — moves to ws_common.py</td><td><span class="pill p-edit">keep</span></td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- DONE -->
+<section class="sec" id="done"><div class="wrap">
+  <div class="seclabel">Definition of done</div>
+  <h2>Task 10 is finished when…</h2>
+  <div class="check">
+    <div class="k">Done when</div>
+    <ul>
+      <li><b>No WebSocket calls <code>accept()</code> before authenticating.</b> An unauthorized socket is closed with 1008 and never accepted.</li>
+      <li><code>websocket.cookies.get("user_id")</code> appears <b>nowhere</b> — identity always comes from a validated session token.</li>
+      <li>Voice quota is billed to the <b>verified</b> user, so a forged cookie can't burn someone else's quota.</li>
+      <li>Public chatbot sockets still work, with an explicitly <code>is_public</code> identity from a server-issued session.</li>
+      <li>There is <b>exactly one</b> session store, backed by Redis; <code>_MEM</code> and <code>_MEM_SESSIONS</code> are deleted.</li>
+      <li>Two workers share sessions — log in against worker 1, make a request served by worker 2, stay logged in.</li>
+      <li><code>websocket.py</code> and <code>session_auth.py</code> are split; no file over ~400 lines; rate limits preserved.</li>
+      <li>The session carries <code>tenant_id</code>, so sockets can set tenant context — <b>unblocking Task 11's WebSocket gap</b>.</li>
+    </ul>
+  </div>
+  <div class="note good"><span class="l">Sequencing advice</span>Ship <b>move 1 (auth before accept)</b> as its own small PR this week, even before the big split. It's the security fix, it's maybe 60 lines, and it's independently reviewable. Moves 2-4 are the refactor and can follow alongside T8/T9.</div>
+</div></section>
+
+<footer><div class="wrap">Task 10 · P1 Stabilize · Dev B · grounded in api/websocket.py (1,343 lines) &amp; api/session_auth.py (1,248 lines)</div></footer>
+
+</body>
+</html>

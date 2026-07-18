@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Review — Sampurna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1320; --panel:#141B2B; --panel2:#172033; --ink:#EAEEF6; --muted:#9AA6BC; --faint:#6E7A92;
+    --line:#222C40; --line2:#2C3650;
+    --green:#46C98B; --green-d:#1C7A53; --green-bg:#13261F;
+    --blue:#5B8DEF; --blue-bg:#142036; --blue-ln:#2A3E66;
+    --teal:#34C6C0; --teal-bg:#11272B;
+    --amber:#E0A537; --amber-bg:#2A2113; --amber-ln:#5A4413;
+    --red:#E5705F; --red-bg:#2A1715; --red-ln:#5A2A22;
+    --violet:#9B8CFF; --violet-bg:#1B1830; --violet-ln:#3A3168;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+    --shadow:0 12px 34px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1000px 460px at 82% -8%,rgba(229,112,95,.10),transparent 60%),
+      radial-gradient(820px 460px at -8% 8%,rgba(224,165,55,.07),transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+  code{font-family:var(--mono);font-size:.85em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .wrap{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 22px}
+  .topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);font-weight:600;margin-right:auto}
+  .topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+  .topnav a:hover{background:#1A2336;color:var(--ink)}
+
+  .hero{padding:56px 0 20px}
+  .kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);font-weight:600;border:1px solid var(--red);border-radius:30px;padding:5px 13px;background:var(--red-bg)}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;margin:16px 0 12px}
+  h1 .g{background:linear-gradient(90deg,#E5705F,#E0A537);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:18px;color:#C2CCDE;max-width:760px;margin:0}
+  .lede b{color:#fff}
+
+  .summary{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0 6px}
+  .sbox{border-radius:14px;padding:16px 18px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .sbox.weak{background:linear-gradient(180deg,rgba(229,112,95,.06),var(--panel))}
+  .sbox.strong{background:linear-gradient(180deg,rgba(70,201,139,.06),var(--panel))}
+  .sbox h3{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 10px}
+  .sbox.weak h3{color:var(--red)} .sbox.strong h3{color:var(--green)}
+  .sbox ul{margin:0;padding:0;list-style:none}
+  .sbox li{position:relative;padding:5px 0 5px 20px;font-size:13.5px;color:#C7D2E6;border-top:1px solid var(--line)}
+  .sbox li:first-child{border-top:none}
+  .sbox li::before{position:absolute;left:0;top:5px;font-family:var(--mono);font-weight:700}
+  .sbox.weak li::before{content:"!";color:var(--red)} .sbox.strong li::before{content:"✓";color:var(--green)}
+
+  .sec{padding:34px 0 4px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.3vw,29px);margin:8px 0 4px;color:#fff}
+  .sec .sub{color:var(--muted);margin:0;max-width:760px}
+
+  .issue{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin:18px 0;overflow:hidden;border-left-width:4px}
+  .issue.crit{border-left-color:var(--red)} .issue.high{border-left-color:var(--amber)}
+  .issue.med{border-left-color:var(--blue)} .issue.verify{border-left-color:var(--violet)}
+  .issue .head{padding:16px 22px 12px;border-bottom:1px solid var(--line)}
+  .issue .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .sev{font-family:var(--mono);font-weight:600;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px}
+  .sev.crit{background:var(--red-bg);color:var(--red);border:1px solid var(--red-ln)}
+  .sev.high{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
+  .sev.med{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-ln)}
+  .sev.verify{background:var(--violet-bg);color:var(--violet);border:1px solid var(--violet-ln)}
+  .issue h3{font-family:var(--disp);font-weight:600;font-size:18.5px;margin:0;color:#fff;letter-spacing:-.01em}
+  .num{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--faint)}
+  .where{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+  .where .f{font-family:var(--mono);font-size:10.5px;color:#9FE3D0;background:var(--green-bg);border:1px solid var(--green-d);border-radius:6px;padding:3px 8px}
+  .body{padding:14px 22px 20px}
+  .blk{margin:0 0 14px}
+  .blk:last-child{margin-bottom:0}
+  .blk .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px}
+  .blk.what .l{color:var(--muted)} .blk.why .l{color:var(--red)} .blk.fix .l{color:var(--green)}
+  .blk p{margin:0;font-size:14.3px;color:#CAD4E6}
+  .blk.fix{background:var(--green-bg);border:1px solid var(--green-d);border-radius:11px;padding:12px 14px}
+  .blk.fix p{color:#CFEAD9}
+  .blk b{color:#fff}
+
+  pre.code{margin:10px 0 0;background:#0B1018;border:1px solid var(--line2);border-radius:10px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.6;color:#D7E0F0}
+  pre.code .c{color:#5C7B6B} pre.code .k{color:#7FA6F0} pre.code .s{color:#8FD8B0} pre.code .r{color:#E5705F}
+
+  table{border-collapse:collapse;width:100%;font-size:12.8px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  .pill{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:11px}
+  .pill.crit{background:var(--red-bg);color:var(--red)} .pill.high{background:var(--amber-bg);color:var(--amber)}
+  .pill.med{background:var(--blue-bg);color:var(--blue)} .pill.verify{background:var(--violet-bg);color:var(--violet)}
+
+  .order{background:linear-gradient(160deg,#101a2e,#0c1422);border:1px solid var(--line2);border-radius:18px;padding:24px 26px;margin:18px 0}
+  .order .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:12px}
+  .order ol{margin:0;padding-left:20px}
+  .order li{font-size:14px;color:#CAD4E6;padding:5px 0}
+  .order li b{color:#fff}
+
+  footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:26px}
+  @media(max-width:760px){.summary{grid-template-columns:1fr}.num{margin-left:0}.topnav a:nth-child(n+5){display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">Security Review</span>
+  <a href="#posture">Posture</a>
+  <a href="#issues">Issues</a>
+  <a href="#matrix">Matrix</a>
+  <a href="#order">Fix order</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kchip">● Security review · grounded in your codebase</span>
+  <h1>Security review — <span class="g">what's exposed, why, and the fix</span></h1>
+  <p class="lede">An honest read of the platform's security posture. Each issue below is grounded in your actual files, with <b>what it is</b>, <b>why it becomes a problem</b>, and <b>what to do</b>. The good news: several foundations are already strong — the gaps are specific and fixable.</p>
+</div></header>
+
+<!-- POSTURE -->
+<section class="sec" id="posture"><div class="wrap">
+  <div class="seclabel">Posture at a glance</div>
+  <h2>Strong foundations, specific gaps</h2>
+  <div class="summary">
+    <div class="sbox strong">
+      <h3>Already strong — keep it</h3>
+      <ul>
+        <li>Passwords hashed with <b>Argon2</b> (modern, correct choice)</li>
+        <li>Strong security headers — <b>CSP, HSTS, X-Frame, nosniff, COOP/COEP</b></li>
+        <li>Master-portal pushes are <b>Fernet-encrypted</b> in transit</li>
+        <li>Master surface is <b>key-guarded</b> (<code>X-Master-API-Key</code> on every call)</li>
+        <li>Login / reset endpoints are correctly <b>public and rate-limited</b></li>
+      </ul>
+    </div>
+    <div class="sbox weak">
+      <h3>Needs work — the gaps</h3>
+      <ul>
+        <li><b>Credentials committed</b> to the git repo &amp; history</li>
+        <li>A single <b>master key</b> is a skeleton key to all admin ops</li>
+        <li><b>Proxy trust</b> is open — client IPs can be spoofed</li>
+        <li>Only <b>4 of 138</b> endpoints are rate-limited</li>
+        <li><b>CORS</b> can fail open; <b>no error monitoring</b> to catch abuse</li>
+      </ul>
+    </div>
+  </div>
+  <p class="sub" style="margin-top:12px">The headline: your endpoint <i>count</i> isn't the risk — the <b>inconsistency</b> is. Some doors are well locked; a few are not, and one very powerful key guards a duplicated surface.</p>
+</div></section>
+
+<!-- ISSUES -->
+<section class="sec" id="issues"><div class="wrap">
+  <div class="seclabel">The issues · worst first</div>
+  <h2>What's wrong, why, and the fix</h2>
+
+  <!-- 1 -->
+  <div class="issue crit">
+    <div class="head"><div class="row"><span class="sev crit">Critical</span><h3>Credentials committed to the repository</h3><span class="num">#1</span></div>
+      <div class="where"><span class="f">tools/database_data/user_credentials_rows.csv</span><span class="f">password_reset_tokens_rows.csv</span></div>
+    </div>
+    <div class="body">
+      <div class="blk what"><span class="l">What it is</span><p>Two CSV exports containing real user credentials and password-reset tokens are checked into the repo — and therefore into its git history.</p></div>
+      <div class="blk why"><span class="l">Why it becomes a problem</span><p>Anyone who ever clones the repo — a contractor, a leaked laptop, a mis-set repo visibility — gets those secrets. Because they're in <b>history</b>, deleting the file today does <b>not</b> remove them; the old commit still holds them. If <code>master_api_key</code> was ever in a committed <code>.env</code>, that skeleton key (issue #2) may be exposed the same way.</p></div>
+      <div class="blk fix"><span class="l">What to do — in your codebase</span><p><b>Rotate first</b> — treat those credentials and tokens as compromised and reset them. Then remove the files and <b>scrub git history</b>, and block the folder so it can't recur.</p>
+        <pre class="code"><span class="k">git</span> rm --cached tools/database_data/user_credentials_rows.csv \
+              tools/database_data/password_reset_tokens_rows.csv
+<span class="k">echo</span> <span class="s">"tools/database_data/"</span> &gt;&gt; .gitignore
+<span class="k">git</span> filter-repo --path tools/database_data/user_credentials_rows.csv --invert-paths</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="issue high">
+    <div class="head"><div class="row"><span class="sev high">High</span><h3>One master key is a skeleton key to all admin operations</h3><span class="num">#2</span></div>
+      <div class="where"><span class="f">api/master_admin_bridge.py (_verify_master_key)</span><span class="f">system_settings.master_api_key · .env MASTER_API_KEY</span></div>
+    </div>
+    <div class="body">
+      <div class="blk what"><span class="l">What it is</span><p>The master bridge re-exposes ~22 admin operations (users, bots, quota, sessions, settings, reports) at <code>/api/master/admin/*</code>, all guarded by a <b>single static</b> <code>X-Master-API-Key</code> header.</p></div>
+      <div class="blk why"><span class="l">Why it becomes a problem</span><p>That one key can create users, delete bots, and change settings — the full admin surface — <b>bypassing the session-cookie login entirely</b>. So your admin security now rests on how that single key is generated, stored, rotated, and kept out of logs. One leak = total admin compromise. This is the concrete cost of the duplicated surface: two doors to the same room, and the second door's lock is a master key.</p></div>
+      <div class="blk fix"><span class="l">What to do — in your codebase</span><p><b>Treat <code>master_api_key</code> as your highest-value secret.</b> Generate it long &amp; random, keep it out of the repo, and <b>rotate it regularly</b>. Add <b>audit logging</b> on every bridge call (who, what, when). Longer term, move from one shared key to <b>per-caller keys or mTLS</b>, and make the bridge <b>delegate to the same admin service functions</b> rather than duplicating logic — so there's one place to secure, not two.</p></div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="issue high">
+    <div class="head"><div class="row"><span class="sev high">High</span><h3>Proxy trust is open — client IPs can be spoofed</h3><span class="num">#3</span></div>
+      <div class="where"><span class="f">api/main.py:128 — ProxyHeadersMiddleware(trusted_hosts="*")</span></div>
+    </div>
+    <div class="body">
+      <div class="blk what"><span class="l">What it is</span><p>The app trusts the <code>X-Forwarded-For</code> header from <b>any</b> client, not just your load balancer.</p></div>
+      <div class="blk why"><span class="l">Why it becomes a problem</span><p>An attacker can forge that header to <b>pretend to be any IP</b>. That silently defeats every IP-based rate limit (issue #4) and <b>poisons your logs and audit trails</b> with fake source IPs — so even the little abuse protection you have becomes bypassable, and forensic data becomes untrustworthy.</p></div>
+      <div class="blk fix"><span class="l">What to do — in your codebase</span><p>Trust proxy headers <b>only</b> from your load balancer's IP, from an env var — never <code>"*"</code>.</p>
+        <pre class="code">TRUSTED = os.getenv(<span class="s">"TRUSTED_PROXY_IPS"</span>,<span class="s">""</span>).split(<span class="s">","</span>)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=TRUSTED <span class="k">or</span> <span class="s">"127.0.0.1"</span>)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="issue high">
+    <div class="head"><div class="row"><span class="sev high">High</span><h3>Almost nothing is rate-limited</h3><span class="num">#4</span></div>
+      <div class="where"><span class="f">api/session_auth.py:26 — in-memory Limiter</span><span class="f">4 of 138 endpoints</span></div>
+    </div>
+    <div class="body">
+      <div class="blk what"><span class="l">What it is</span><p>Only 4 endpoints (login + password flows) have a rate limit, and the limiter is <b>in-memory</b> — so it isn't even shared across your 4 workers. The chat/voice WebSockets and every admin write have <b>no throttle at all</b>.</p></div>
+      <div class="blk why"><span class="l">Why it becomes a problem</span><p>Unthrottled endpoints invite brute-force, scraping, and cost-abuse — someone can hammer the expensive AI/voice paths, or enumerate data through unprotected admin writes. And because the limiter is per-worker in-memory, a "3/min" limit is really "3 × workers." Combined with issue #3, even those limits are bypassable.</p></div>
+      <div class="blk fix"><span class="l">What to do — in your codebase</span><p>Back the limiter with <b>Redis</b> (you already run Redis) so limits are shared, then extend coverage to the <b>expensive AI endpoints</b> and add manual per-connection limits on the <b>WebSockets</b>. Key by user/tenant after login, by (fixed) IP before.</p>
+        <pre class="code">Limiter(key_func=get_remote_address,
+        storage_uri=<span class="s">"redis://…"</span>)   <span class="c"># shared across workers</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="issue med">
+    <div class="head"><div class="row"><span class="sev med">Medium</span><h3>CORS can fail open</h3><span class="num">#5</span></div>
+      <div class="where"><span class="f">api/main.py — CORS fallback</span></div>
+    </div>
+    <div class="body">
+      <div class="blk what"><span class="l">What it is</span><p>If <code>ALLOWED_ORIGINS</code> is unset, CORS falls back to <code>["*"]</code> — <b>together with</b> <code>allow_credentials=True</code>.</p></div>
+      <div class="blk why"><span class="l">Why it becomes a problem</span><p>Wildcard origins <i>plus</i> credentials is the classic misconfiguration that lets <b>any website</b> make logged-in requests to your API on a user's behalf (cross-site data theft). It only takes one deployment where that env var is forgotten to open the door.</p></div>
+      <div class="blk fix"><span class="l">What to do — in your codebase</span><p><b>Fail closed:</b> require an explicit origin list and refuse to start without it — never fall back to <code>"*"</code>.</p>
+        <pre class="code">origins = [o <span class="k">for</span> o <span class="k">in</span> os.getenv(<span class="s">"ALLOWED_ORIGINS"</span>,<span class="s">""</span>).split(<span class="s">","</span>) <span class="k">if</span> o]
+<span class="k">if not</span> origins: <span class="k">raise</span> RuntimeError(<span class="s">"ALLOWED_ORIGINS must be set"</span>)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="issue med">
+    <div class="head"><div class="row"><span class="sev med">Medium</span><h3>No error monitoring — attacks &amp; failures are invisible</h3><span class="num">#6</span></div>
+      <div class="where"><span class="f">no Sentry · 222 print() · 514 broad except</span></div>
+    </div>
+    <div class="body">
+      <div class="blk what"><span class="l">What it is</span><p>There's no error monitor, logging is ad-hoc (222 <code>print()</code>s), and 514 broad <code>except Exception</code> blocks can swallow failures silently.</p></div>
+      <div class="blk why"><span class="l">Why it becomes a problem</span><p>Security matters here too: without monitoring you can't <b>see an attack in progress</b> — a spike of failed logins, a flood on the AI endpoints, repeated 500s from a probe. Broad excepts that swallow errors mean an exploited failure can run indefinitely with <b>no signal</b> to anyone.</p></div>
+      <div class="blk fix"><span class="l">What to do — in your codebase</span><p>Add <b>Sentry</b> with a global exception handler so every unhandled error is captured and <b>alerts</b> the team; make the broad excepts <b>log with context</b> instead of swallowing; add a request ID so one suspicious session is traceable.</p></div>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="issue verify">
+    <div class="head"><div class="row"><span class="sev verify">Verify</span><h3>Confirm admin routes enforce auth globally</h3><span class="num">#7</span></div>
+      <div class="where"><span class="f">admin/api/admin_router.py</span></div>
+    </div>
+    <div class="body">
+      <div class="blk what"><span class="l">What it is</span><p>A per-endpoint scan couldn't see auth on ~20 admin write-routes. This is <b>likely</b> because admin auth is applied at the <b>router/middleware level</b> (which the scan can't detect), not a real hole — but it's unconfirmed.</p></div>
+      <div class="blk why"><span class="l">Why it becomes a problem</span><p><b>If</b> any of those 61 admin routes is <i>not</i> covered by a global admin-auth dependency, it would be an unauthenticated admin action — the most severe kind of gap. The uncertainty itself is the risk.</p></div>
+      <div class="blk fix"><span class="l">What to do — in your codebase</span><p>Confirm the admin router (or its parent app) applies a <b>global admin-auth dependency</b> so every route inherits it. If it relies on per-endpoint checks, add the missing ones. This is a 10-minute read that turns a "maybe" into a "no."</p></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- MATRIX -->
+<section class="sec" id="matrix"><div class="wrap">
+  <div class="seclabel">Reference</div>
+  <h2>Severity matrix</h2>
+  <table>
+    <thead><tr><th>#</th><th>Issue</th><th>Severity</th><th>Maps to</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Credentials committed to the repo</td><td><span class="pill crit">Critical</span></td><td>Cleanup (do first)</td></tr>
+      <tr><td>2</td><td>Single master key = skeleton key</td><td><span class="pill high">High</span></td><td>Auth / bridge consolidation</td></tr>
+      <tr><td>3</td><td>Open proxy trust (IP spoofing)</td><td><span class="pill high">High</span></td><td>Task 5</td></tr>
+      <tr><td>4</td><td>Near-zero rate limiting</td><td><span class="pill high">High</span></td><td>Task 2</td></tr>
+      <tr><td>5</td><td>CORS fails open</td><td><span class="pill med">Medium</span></td><td>Task 5</td></tr>
+      <tr><td>6</td><td>No error monitoring</td><td><span class="pill med">Medium</span></td><td>Error-monitoring task</td></tr>
+      <tr><td>7</td><td>Admin global-auth (verify)</td><td><span class="pill verify">Verify</span></td><td>Task 3 review</td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- ORDER -->
+<section class="sec" id="order"><div class="wrap">
+  <div class="seclabel">Recommended sequence</div>
+  <h2>Fix in this order</h2>
+  <div class="order">
+    <div class="k">Priority order</div>
+    <ol>
+      <li><b>Rotate &amp; purge the committed credentials</b> (#1) — and rotate <code>master_api_key</code> while you're at it. Nothing else matters if secrets are already out.</li>
+      <li><b>Verify admin routes are globally authed</b> (#7) — cheap, and rules out the worst-case.</li>
+      <li><b>Lock proxy trust</b> (#3) so rate limits and logs become trustworthy.</li>
+      <li><b>Add real rate limiting</b> (#4, Redis-backed) across auth, AI, and WebSocket paths.</li>
+      <li><b>Fail CORS closed</b> (#5) and harden the <code>master_api_key</code> handling / add bridge audit logging (#2).</li>
+      <li><b>Add Sentry + a global handler</b> (#6) so you can see the next problem before your users do.</li>
+    </ol>
+  </div>
+  <p class="sub" style="margin-top:10px">Every item here already maps to a task in your stabilize phase — so securing the platform isn't extra work, it's your existing plan, sequenced by risk.</p>
+</div></section>
+
+<footer><div class="wrap">Security review · grounded in the Sampurna codebase · what · why · fix · sequenced by severity</div></footer>
+
+</body>
+</html>

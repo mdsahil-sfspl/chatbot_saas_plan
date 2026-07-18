@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signup / Onboarding Flow — Implementation Deep-Dive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1320; --panel:#141B2B; --panel2:#172033; --ink:#EAEEF6; --muted:#9AA6BC; --faint:#6E7A92;
+    --line:#222C40; --line2:#2C3650;
+    --green:#46C98B; --green-d:#1C7A53; --green-bg:#13261F;
+    --blue:#5B8DEF; --blue-bg:#142036; --blue-ln:#2A3E66;
+    --teal:#34C6C0; --teal-bg:#11272B; --teal-d:#1F5C58;
+    --amber:#E0A537; --amber-bg:#2A2113; --amber-ln:#5A4413;
+    --red:#E5705F; --red-bg:#2A1715; --red-ln:#5A2A22;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+    --shadow:0 12px 34px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1000px 460px at 82% -8%,rgba(70,201,139,.09),transparent 60%),
+      radial-gradient(820px 460px at -8% 8%,rgba(91,141,239,.08),transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  code{font-family:var(--mono);font-size:.86em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .wrap{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 22px}
+  .topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-right:auto}
+  .topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+  .topnav a:hover{background:#1A2336;color:var(--ink)}
+
+  .hero{padding:60px 0 24px}
+  .kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;border:1px solid var(--teal);border-radius:30px;padding:5px 13px;background:var(--teal-bg)}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;margin:18px 0 14px}
+  h1 .g{background:linear-gradient(90deg,#46C98B,#5B8DEF);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:18px;color:#C2CCDE;max-width:720px;margin:0}
+  .lede b{color:#fff}
+
+  .sec{padding:42px 0 4px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.3vw,29px);letter-spacing:-.01em;margin:8px 0 4px;color:#fff}
+  .sec .sub{color:var(--muted);margin:0;max-width:720px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px 24px;margin:18px 0}
+  .now{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;margin-top:4px}
+  .now .it{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#C7D2E6}
+  .now .it .b{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:11px;white-space:nowrap;margin-top:1px}
+  .b.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-d)}
+  .b.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
+  .b.new{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-ln)}
+  .surprise{margin-top:16px;background:var(--blue-bg);border:1px solid var(--blue-ln);border-radius:11px;padding:13px 15px;font-size:14px;color:#CBD8F5}
+  .surprise b{color:#fff} .surprise .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;display:block;margin-bottom:5px}
+
+  .figure{background:#0B1018;border:1px solid var(--line2);border-radius:14px;padding:16px;margin:14px 0}
+  .figure svg{display:block;width:100%;height:auto}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin:18px 0;overflow:hidden}
+  .card .head{padding:18px 22px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(70,201,139,.05),transparent)}
+  .card .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-weight:600;font-size:12px;color:#0E1320;background:var(--teal);padding:4px 10px;border-radius:9px}
+  .card h3{font-family:var(--disp);font-weight:600;font-size:19px;margin:0;color:#fff;letter-spacing:-.01em}
+  .meta{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:3px 10px}
+  .files{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+  .files .file{font-family:var(--mono);font-size:10.5px;color:#9FE3D0;background:var(--green-bg);border:1px solid var(--green-d);border-radius:6px;padding:3px 8px}
+  .body{padding:8px 22px 20px}
+  ol.steps{margin:6px 0 0;padding:0;list-style:none;counter-reset:st}
+  ol.steps>li{counter-increment:st;position:relative;padding:0 0 14px 32px;font-size:14.5px;color:#CAD4E6}
+  ol.steps>li::before{content:counter(st);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:7px;background:#1C2538;border:1px solid var(--line2);color:var(--teal);font-family:var(--mono);font-size:11px;font-weight:600;display:grid;place-items:center}
+  ol.steps>li b{color:#fff}
+
+  pre.code{margin:11px 0 2px;background:#0B1018;border:1px solid var(--line2);border-radius:11px;padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:12.2px;line-height:1.62;color:#D7E0F0}
+  pre.code .c{color:#5C7B6B} pre.code .k{color:#7FA6F0} pre.code .s{color:#8FD8B0} pre.code .f{color:#E0A537}
+
+  .note{margin:12px 0 2px;border-radius:11px;padding:11px 14px;font-size:13.5px;line-height:1.55}
+  .note.tip{background:var(--blue-bg);border:1px solid var(--blue-ln);color:#C9D7F2}
+  .note.warn{background:var(--amber-bg);border:1px solid var(--amber-ln);color:#EAD8A8}
+  .note .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px}
+  .note.tip .l{color:var(--blue)} .note.warn .l{color:var(--amber)}
+  .note b{color:#fff}
+
+  table{border-collapse:collapse;width:100%;font-size:12.8px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td.e{font-family:var(--mono);color:#A9C2F2}
+  .pill{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:11px}
+  .p-reuse{background:var(--green-bg);color:var(--green)} .p-adapt{background:var(--amber-bg);color:var(--amber)} .p-new{background:var(--blue-bg);color:var(--blue)}
+
+  .check{background:linear-gradient(160deg,#101a2e,#0c1422);border:1px solid var(--line2);border-radius:18px;padding:24px 26px;margin:18px 0}
+  .check .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:12px}
+  .check ul{margin:0;padding:0;list-style:none}
+  .check li{position:relative;padding:7px 0 7px 30px;font-size:14px;color:#CAD4E6;border-top:1px solid var(--line)}
+  .check li:first-child{border-top:none}
+  .check li::before{content:"";position:absolute;left:2px;top:11px;width:13px;height:13px;border-radius:4px;border:1.5px solid var(--teal)}
+  .check b{color:#fff}
+
+  footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:26px}
+  @media(max-width:760px){.now{grid-template-columns:1fr}.meta{margin-left:0}.topnav a:nth-child(n+5){display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">Task · Signup / Onboarding</span>
+  <a href="#now">Today</a>
+  <a href="#model">The flow</a>
+  <a href="#do">What to do</a>
+  <a href="#table">Reuse table</a>
+  <a href="#done">Done when</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kchip">● Deep-dive · Dev D · Fullstack · P1</span>
+  <h1>Signup &amp; onboarding — <span class="g">from admin-provisioned to self-serve</span></h1>
+  <p class="lede">Today a person can only get in if an <b>admin creates them</b>. This task builds the product's front door: a public signup that spins up a <b>new tenant, its first admin, and a working workspace</b> — reusing the user-creation and auth plumbing you already have.</p>
+</div></header>
+
+<!-- TODAY -->
+<section class="sec" id="now"><div class="wrap">
+  <div class="seclabel">Where you are today</div>
+  <h2>How people get in right now</h2>
+  <div class="panel">
+    <div class="now">
+      <div class="it"><span class="b warn">gap</span><span><b style="color:#fff">No self-serve signup</b> — users are created by an admin via <code>create_user</code> and <code>bulk-upload</code>, or pushed by the master portal.</span></div>
+      <div class="it"><span class="b warn">gap</span><span><b style="color:#fff">One shared world</b> — everything hangs off a single <code>system_settings</code> (used 97×). No tenant concept yet.</span></div>
+      <div class="it"><span class="b ok">reuse</span><span><b style="color:#fff">Auth is ready</b> — Argon2 hashing, sessions, and a <code>must_change_pw</code> first-login flow already exist.</span></div>
+      <div class="it"><span class="b ok">reuse</span><span><b style="color:#fff">A <code>max_users</code> quota</b> is already enforced — it just needs to become <i>per-tenant</i>.</span></div>
+      <div class="it"><span class="b ok">reuse</span><span><b style="color:#fff">Email service + <code>UserCreate</code> model</b> exist — reuse them for verification and validation.</span></div>
+      <div class="it"><span class="b new">build</span><span><b style="color:#fff">New:</b> a public <code>/signup</code>, a <code>tenants</code> record, default-workspace seeding, and a trial hook.</span></div>
+    </div>
+    <div class="surprise">
+      <span class="l">The sequencing insight that saves rework</span>
+      This task starts <b>before</b> full multi-tenant isolation (Task 12) lands. So build signup to <b>create a tenant and stamp <code>tenant_id</code> from day one</b>, even though row-level isolation is enforced later. That way Task 12 slots in cleanly and you never rewrite the signup path. Until isolation is live, keep public signups gated (invite-only or a staging flag).
+    </div>
+  </div>
+</div></section>
+
+<!-- THE FLOW -->
+<section class="sec" id="model"><div class="wrap">
+  <div class="seclabel">The mental model</div>
+  <h2>What one signup should do</h2>
+  <p class="sub">A single self-serve signup turns into a whole ready workspace. Everything to the right happens in one flow.</p>
+  <div class="figure">
+    <svg viewBox="0 0 640 132" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Signup form leads to creating a tenant and first admin, seeding defaults, verifying email, and landing on the dashboard with a trial active.">
+      <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+      <rect x="12" y="40" width="112" height="52" rx="10" fill="#11272B" stroke="#1F5C58"/><text x="68" y="62" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#EAEEF6" text-anchor="middle">Signup form</text><text x="68" y="78" font-family="Inter" font-size="9.5" fill="#9AA6BC" text-anchor="middle">org · email · pw</text>
+      <line x1="124" y1="66" x2="140" y2="66" stroke="#34C6C0" stroke-width="1.5" marker-end="url(#a)"/>
+      <rect x="142" y="40" width="112" height="52" rx="10" fill="#13261F" stroke="#1C7A53"/><text x="198" y="60" font-family="Space Grotesk" font-size="11.5" font-weight="600" fill="#EAEEF6" text-anchor="middle">Tenant +</text><text x="198" y="75" font-family="Space Grotesk" font-size="11.5" font-weight="600" fill="#EAEEF6" text-anchor="middle">first admin</text>
+      <line x1="254" y1="66" x2="270" y2="66" stroke="#46C98B" stroke-width="1.5" marker-end="url(#a)"/>
+      <rect x="272" y="40" width="112" height="52" rx="10" fill="#13261F" stroke="#1C7A53"/><text x="328" y="60" font-family="Space Grotesk" font-size="11.5" font-weight="600" fill="#EAEEF6" text-anchor="middle">Seed defaults</text><text x="328" y="76" font-family="Inter" font-size="9.5" fill="#9AA6BC" text-anchor="middle">bot · quotas · flags</text>
+      <line x1="384" y1="66" x2="400" y2="66" stroke="#46C98B" stroke-width="1.5" marker-end="url(#a)"/>
+      <rect x="402" y="40" width="112" height="52" rx="10" fill="#142036" stroke="#2A3E66"/><text x="458" y="66" font-family="Space Grotesk" font-size="11.5" font-weight="600" fill="#EAEEF6" text-anchor="middle">Verify email</text>
+      <line x1="514" y1="66" x2="530" y2="66" stroke="#5B8DEF" stroke-width="1.5" marker-end="url(#a)"/>
+      <rect x="532" y="40" width="96" height="52" rx="10" fill="#11272B" stroke="#1F5C58"/><text x="580" y="60" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#EAEEF6" text-anchor="middle">Dashboard</text><text x="580" y="76" font-family="Inter" font-size="9.5" fill="#9AA6BC" text-anchor="middle">trial active</text>
+    </svg>
+  </div>
+</div></section>
+
+<!-- WHAT TO DO -->
+<section class="sec" id="do"><div class="wrap">
+  <div class="seclabel">What to do · in order</div>
+  <h2>The four moves</h2>
+  <p class="sub">Build the tenant-aware signup first, then make it safe, then make the workspace actually usable.</p>
+
+  <!-- a -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">a</span><h3>Create tenant + first admin in one transaction</h3><span class="meta">~2 days</span></div>
+      <div class="files"><span class="file">api/routers/signup.py (new)</span><span class="file">migrations/ (tenants)</span><span class="file">reuse: admin_router.create_user</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Add a <code>tenants</code> table</b> (id, org name, plan, status, created_at). This is the same table Task 10 designs — build the minimal version now.</li>
+        <li><b>Write the signup endpoint</b> — one transaction so a half-made tenant can never exist. Reuse your existing password hashing and user-creation logic.
+          <pre class="code"><span class="c"># api/routers/signup.py</span>
+<span class="f">@router.post</span>(<span class="s">"/signup"</span>)
+<span class="k">async def</span> signup(payload: SignupIn):
+    <span class="k">async with</span> db.transaction():
+        tenant_id = <span class="k">await</span> create_tenant(payload.org_name)
+        <span class="k">await</span> create_user(tenant_id, payload.email,
+                          hash_password(payload.password), role=<span class="s">"admin"</span>)
+        <span class="k">await</span> seed_defaults(tenant_id)          <span class="c"># move (c)</span>
+        <span class="k">await</span> start_trial(tenant_id, <span class="s">"starter"</span>)  <span class="c"># move (d)</span>
+    <span class="k">await</span> send_verification_email(payload.email)
+    <span class="k">return</span> {<span class="s">"tenant_id"</span>: tenant_id}</pre>
+        </li>
+        <li><b>Stamp <code>tenant_id</code> everywhere</b> the new user's rows are written — so the account is isolation-ready before Task 12 turns on RLS.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- b -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">b</span><h3>Make it safe — verify, validate, rate-limit</h3><span class="meta">~1.5 days</span></div>
+      <div class="files"><span class="file">api/routers/signup.py</span><span class="file">reuse: email_service · must_change_pw</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Email verification</b> — reuse your email service to send a signed, expiring verification link; the workspace stays limited until it's confirmed.</li>
+        <li><b>Password &amp; input rules</b> — enforce a minimum password policy in the <code>SignupIn</code> model; reject disposable domains if you want.</li>
+        <li><b>Rate-limit the endpoint</b> (ties to Task 2) so signup can't be scripted for abuse:
+          <pre class="code"><span class="c"># signup is a prime abuse target — cap it per IP</span>
+<span class="f">@limiter.limit</span>(<span class="s">"5/hour"</span>, key_func=get_remote_address)</pre>
+        </li>
+        <li><b>Handle duplicates gracefully</b> — a clear "email already registered" path, and re-send-verification instead of silent failure.</li>
+      </ol>
+      <div class="note warn"><span class="l">Depends on Task 5 (proxy fix)</span>Rate-limiting signup by IP only works once the proxy trust is locked down — otherwise the IP can be forged. Make sure that fix lands alongside this.</div>
+    </div>
+  </div>
+
+  <!-- c -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">c</span><h3>Seed a workspace that actually works</h3><span class="meta">~1.5 days</span></div>
+      <div class="files"><span class="file">reuse: system_settings defaults · master-config</span><span class="file">core/usage_limiter.py (per-tenant quota)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Create a starter chatbot</b> for the new tenant so the dashboard isn't empty — a scaffold they can immediately test.</li>
+        <li><b>Copy default config per tenant</b> — quotas (reuse the <code>max_users</code> / voice-quota logic, now scoped to the tenant), feature flags, and languages, seeded from your master-config defaults.</li>
+        <li><b>Guide the first session</b> — a short onboarding checklist (verify email → try the bot → upload a doc) that lands them on the dashboard.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- d -->
+  <div class="card">
+    <div class="head">
+      <div class="row"><span class="tag">d</span><h3>Start the trial (billing hook)</h3><span class="meta">~1 day</span></div>
+      <div class="files"><span class="file">links to Task 13 (Razorpay)</span></div>
+    </div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Put every new tenant on a trial plan</b> at signup (status = trial, plan = starter), so feature flags and quotas apply from minute one.</li>
+        <li><b>Leave a clean seam for Razorpay</b> (Task 13) — signup creates the trial; billing later attaches the paid subscription and upgrades the plan/flags.</li>
+      </ol>
+      <div class="note tip"><span class="l">Order of work</span>Signup can ship its trial state before Razorpay is wired. Don't block onboarding on billing — the two meet at the plan/flag layer.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- REUSE TABLE -->
+<section class="sec" id="table"><div class="wrap">
+  <div class="seclabel">Reference</div>
+  <h2>Reuse vs build</h2>
+  <p class="sub">Most of the plumbing already exists — this task mostly re-wires it for self-serve, multi-tenant creation.</p>
+  <table>
+    <thead><tr><th>Capability</th><th>Today</th><th>For signup</th><th></th></tr></thead>
+    <tbody>
+      <tr><td class="e">User creation</td><td>admin <code>create_user</code></td><td>self-serve + tenant-stamped</td><td><span class="pill p-adapt">adapt</span></td></tr>
+      <tr><td class="e">Password / first login</td><td>Argon2 · must_change_pw</td><td>reuse; add email verify</td><td><span class="pill p-reuse">reuse</span></td></tr>
+      <tr><td class="e">User cap</td><td><code>max_users</code> (global)</td><td>per-tenant quota</td><td><span class="pill p-adapt">adapt</span></td></tr>
+      <tr><td class="e">Config</td><td><code>system_settings</code> (global)</td><td>per-tenant defaults on create</td><td><span class="pill p-adapt">adapt</span></td></tr>
+      <tr><td class="e">Email</td><td>email_service</td><td>verification links</td><td><span class="pill p-reuse">reuse</span></td></tr>
+      <tr><td class="e">Tenant record</td><td>—</td><td><code>tenants</code> table + <code>tenant_id</code></td><td><span class="pill p-new">new</span></td></tr>
+      <tr><td class="e">Public signup endpoint</td><td>—</td><td><code>/signup</code> + trial</td><td><span class="pill p-new">new</span></td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- DONE -->
+<section class="sec" id="done"><div class="wrap">
+  <div class="seclabel">Definition of done</div>
+  <h2>The task is finished when…</h2>
+  <div class="check">
+    <div class="k">Done when</div>
+    <ul>
+      <li>A public <b><code>/signup</code></b> creates a tenant, its first admin user, and default config in <b>one transaction</b> (no half-made accounts).</li>
+      <li>Email verification works; a password policy is enforced; the endpoint is rate-limited per IP.</li>
+      <li>The new tenant lands in a <b>working workspace</b> — a starter chatbot, seeded quotas/flags, and a dashboard.</li>
+      <li><code>tenant_id</code> is stamped on everything from day one, so Task 12's isolation drops in without rework.</li>
+      <li>Every new tenant starts on a <b>trial plan</b>, with a clean seam for Razorpay (Task 13) to attach billing later.</li>
+      <li>Until Task 12 isolation is live, public signup stays <b>gated</b> (invite or staging flag).</li>
+    </ul>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Signup / onboarding deep-dive · Dev D · turns an admin-provisioned internal tool into a self-serve product</div></footer>
+
+</body>
+</html>

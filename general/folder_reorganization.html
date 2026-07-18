@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Folder Reorganization — Sampurna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1320; --panel:#141B2B; --panel2:#172033; --ink:#EAEEF6; --muted:#9AA6BC; --faint:#6E7A92;
+    --line:#222C40; --line2:#2C3650;
+    --green:#46C98B; --green-d:#1C7A53; --green-bg:#13261F;
+    --blue:#5B8DEF; --blue-bg:#142036; --blue-ln:#2A3E66;
+    --teal:#34C6C0; --teal-bg:#11272B;
+    --amber:#E0A537; --amber-bg:#2A2113; --amber-ln:#5A4413;
+    --red:#E5705F; --red-bg:#2A1715; --red-ln:#5A2A22;
+    --violet:#9B8CFF; --violet-bg:#1B1830; --violet-ln:#3A3168;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+    --shadow:0 12px 34px rgba(0,0,0,.42);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1000px 460px at 82% -8%,rgba(52,198,192,.10),transparent 60%),
+      radial-gradient(820px 460px at -8% 8%,rgba(155,140,255,.07),transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+  code{font-family:var(--mono);font-size:.85em;background:#1C2538;color:#A9C2F2;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(14,19,32,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .wrap{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 22px}
+  .topnav .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-right:auto}
+  .topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);padding:5px 9px;border-radius:7px;text-transform:uppercase}
+  .topnav a:hover{background:#1A2336;color:var(--ink)}
+
+  .hero{padding:56px 0 20px}
+  .kchip{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;border:1px solid var(--teal);border-radius:30px;padding:5px 13px;background:var(--teal-bg)}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.02em;margin:16px 0 12px}
+  h1 .g{background:linear-gradient(90deg,#34C6C0,#9B8CFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:18px;color:#C2CCDE;max-width:770px;margin:0}
+  .lede b{color:#fff}
+
+  .sec{padding:36px 0 4px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .sec h2{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.3vw,28px);margin:8px 0 4px;color:#fff}
+  .sec .sub{color:var(--muted);margin:0;max-width:790px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;margin:16px 0}
+  .now{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+  .now .it{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#C7D2E6}
+  .now .it .b{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:11px;white-space:nowrap;margin-top:1px}
+  .b.bad{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
+  .b.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-d)}
+
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+  .treebox{background:#0B1018;border:1px solid var(--line2);border-radius:14px;padding:14px 16px;overflow-x:auto}
+  .treebox.before{border-color:var(--amber-ln)}
+  .treebox.after{border-color:var(--green-d)}
+  .treebox .cap{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:9px}
+  .before .cap{color:var(--amber)} .after .cap{color:var(--green)}
+  pre.tree{margin:0;font-family:var(--mono);font-size:11.6px;line-height:1.75;color:#C9D3E6;white-space:pre}
+  pre.tree .d{color:#7FA6F0;font-weight:600}
+  pre.tree .g{color:#5C7B6B}
+  pre.tree .n{color:#EAEEF6}
+  pre.tree .x{color:var(--red)}
+  pre.tree .a{color:var(--teal)}
+
+  table{border-collapse:collapse;width:100%;font-size:12.7px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#1B2436;color:#cfe;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#172033}
+  td.e{font-family:var(--mono);color:#A9C2F2}
+  td.to{font-family:var(--mono);color:#9FE3D0}
+
+  .note{margin:14px 0;border-radius:11px;padding:12px 15px;font-size:13.5px;line-height:1.55}
+  .note.tip{background:var(--blue-bg);border:1px solid var(--blue-ln);color:#C9D7F2}
+  .note.warn{background:var(--amber-bg);border:1px solid var(--amber-ln);color:#EAD8A8}
+  .note .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px}
+  .note.tip .l{color:var(--blue)} .note.warn .l{color:var(--amber)}
+  .note b{color:#fff}
+
+  .check{background:linear-gradient(160deg,#101a2e,#0c1422);border:1px solid var(--line2);border-radius:18px;padding:24px 26px;margin:18px 0}
+  .check .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:12px}
+  .check ul{margin:0;padding:0;list-style:none}
+  .check li{position:relative;padding:7px 0 7px 30px;font-size:14px;color:#CAD4E6;border-top:1px solid var(--line)}
+  .check li:first-child{border-top:none}
+  .check li::before{content:"";position:absolute;left:2px;top:11px;width:13px;height:13px;border-radius:4px;border:1.5px solid var(--teal)}
+  .check b{color:#fff}
+
+  footer{padding:34px 0 56px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em;border-top:1px solid var(--line);margin-top:26px}
+  @media(max-width:820px){.now{grid-template-columns:1fr}.cmp{grid-template-columns:1fr}.topnav a:nth-child(n+5){display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">Folder Reorganization</span>
+  <a href="#now">Today</a>
+  <a href="#core">core/</a>
+  <a href="#api">api/</a>
+  <a href="#rest">Rest</a>
+  <a href="#how">How</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kchip">● Structure proposal · grounded in your tree</span>
+  <h1>Folder reorganization — <span class="g">from flat god-folders to clear subpackages</span></h1>
+  <p class="lede">Two directories do almost everything: <b><code>core/</code> holds 29 files</b> mixing six unrelated concerns, and <b><code>api/</code> holds 20</b> mixing routers, services, and leftovers. Grouping them into subfolders makes the codebase far easier to navigate — with <b>no behaviour change</b>.</p>
+</div></header>
+
+<!-- TODAY -->
+<section class="sec" id="now"><div class="wrap">
+  <div class="seclabel">Where you are today</div>
+  <h2>What's flat and what's fine</h2>
+  <div class="panel">
+    <div class="now">
+      <div class="it"><span class="b bad">flat</span><span><b style="color:#fff">core/ — 29 files</b> in one folder: RAG, LLM, config, DB/Redis clients, usage limits, sessions — all mixed.</span></div>
+      <div class="it"><span class="b bad">flat</span><span><b style="color:#fff">api/ — 20 files</b> in one folder: routers, services, and dead patch/one-off files together.</span></div>
+      <div class="it"><span class="b bad">stray</span><span><b style="color:#fff">chunking_engine/</b> — a whole top-level folder that's mostly dead (only one file survives cleanup).</span></div>
+      <div class="it"><span class="b bad">grab-bag</span><span><b style="color:#fff">tools/</b> + scripts scattered in <code>api/</code> and <code>admin/api/</code> — no single home for one-off scripts.</span></div>
+      <div class="it"><span class="b ok">good</span><span><b style="color:#fff">audio/</b> is already well organized — <code>stt/</code> has a subfolder per provider.</span></div>
+      <div class="it"><span class="b ok">good</span><span><b style="color:#fff">data/, image/, admin/</b> are reasonably grouped already — light touches only.</span></div>
+    </div>
+    <div class="note tip" style="margin-top:14px"><span class="l">Do the cleanup first</span>Run the <b>unused-code removal</b> before reorganizing — there's no point carefully filing away ~4,500 lines you're about to delete. Reorganize what remains.</div>
+  </div>
+</div></section>
+
+<!-- CORE -->
+<section class="sec" id="core"><div class="wrap">
+  <div class="seclabel">The big win · core/</div>
+  <h2>core/ — 29 flat files → 6 focused subpackages</h2>
+  <p class="sub">Group by concern so a developer instantly knows where retrieval, LLM, config, data access, and usage logic live.</p>
+  <div class="cmp">
+    <div class="treebox before">
+      <div class="cap">Before · everything in core/</div>
+<pre class="tree"><span class="d">core/</span>
+  <span class="n">rag_engine.py  rag_retrieve.py</span>
+  <span class="n">vector_store.py  embedding.py</span>
+  <span class="n">query_normalizer.py</span>
+  <span class="n">llm_handler.py</span>
+  <span class="n">response_formatter.py</span>
+  <span class="n">response_normalizer.py</span>
+  <span class="n">history_format.py</span>
+  <span class="n">conversation_saver.py</span>
+  <span class="n">memory_manager.py</span>
+  <span class="n">ai_intelligence.py</span>
+  <span class="n">config_store.py  dynamic_config.py</span>
+  <span class="n">bot_config.py</span>
+  <span class="n">db_client.py  redis_client.py</span>
+  <span class="n">crypto.py  migrate_encrypt.py</span>
+  <span class="n">usage_limiter.py</span>
+  <span class="n">session_usage_limiter.py</span>
+  <span class="g">… + dead: rag_retrieve, session_manager,</span>
+  <span class="g">   fast_quota_enforcer, supabase_client</span></pre>
+    </div>
+    <div class="treebox after">
+      <div class="cap">After · grouped by concern</div>
+<pre class="tree"><span class="d">core/</span>
+  <span class="d">rag/</span>          <span class="g"># retrieval</span>
+    <span class="a">engine.py  vector_store.py</span>
+    <span class="a">embedding.py  query_normalizer.py</span>
+    <span class="a">chunking.py</span>  <span class="g"># ← from chunking_engine</span>
+  <span class="d">llm/</span>          <span class="g"># generation + shaping</span>
+    <span class="a">handler.py  response_formatter.py</span>
+    <span class="a">response_normalizer.py  history_format.py</span>
+  <span class="d">conversation/</span> <span class="g"># memory + analytics</span>
+    <span class="a">saver.py  memory_manager.py</span>
+    <span class="a">intelligence.py</span>
+  <span class="d">config/</span>       <span class="g"># runtime config</span>
+    <span class="a">store.py  dynamic.py  bot_config.py</span>
+  <span class="d">clients/</span>      <span class="g"># infra / data access</span>
+    <span class="a">db.py  redis.py  crypto.py</span>
+    <span class="a">migrate_encrypt.py</span>
+  <span class="d">usage/</span>        <span class="g"># quotas</span>
+    <span class="a">limiter.py  session_usage.py</span></pre>
+    </div>
+  </div>
+  <div class="note tip"><span class="l">Bonus consolidation</span>The surviving <code>contextual_chunking.py</code> moves into <code>core/rag/chunking.py</code>, which lets you <b>delete the entire <code>chunking_engine/</code> top-level folder</b> — one fewer place to look.</div>
+</div></section>
+
+<!-- API -->
+<section class="sec" id="api"><div class="wrap">
+  <div class="seclabel">Second win · api/</div>
+  <h2>api/ — routers, services &amp; leftovers → clear split</h2>
+  <p class="sub">Separate the HTTP layer (routers) from helpers (services), keep <code>main.py</code> as the entrypoint, and evict the dead/one-off files.</p>
+  <div class="cmp">
+    <div class="treebox before">
+      <div class="cap">Before · flat api/</div>
+<pre class="tree"><span class="d">api/</span>
+  <span class="n">main.py</span>
+  <span class="n">session_auth.py  websocket.py</span>
+  <span class="n">ai_intelligence_router.py</span>
+  <span class="n">master_config.py</span>
+  <span class="n">master_config_receiver.py</span>
+  <span class="n">master_admin_bridge.py</span>
+  <span class="n">me.py  choose.py</span>
+  <span class="n">email_service.py</span>
+  <span class="n">password_hasher.py</span>
+  <span class="n">session_control_helper.py</span>
+  <span class="x">patch_main.py  session_auth_patch.py</span>
+  <span class="x">session_tracker.py  test_search_function.py</span>
+  <span class="x">session_config_endpoint.py</span>
+  <span class="x">hash_all_passwords.py</span>
+  <span class="x">database_embeddings_change.py</span></pre>
+    </div>
+    <div class="treebox after">
+      <div class="cap">After · routers vs services</div>
+<pre class="tree"><span class="d">api/</span>
+  <span class="a">main.py</span>       <span class="g"># entrypoint stays put</span>
+  <span class="d">routers/</span>
+    <span class="a">auth.py</span>       <span class="g"># session_auth</span>
+    <span class="a">websocket.py</span>
+    <span class="a">me.py  choose.py</span>
+    <span class="a">ai_intelligence.py</span>
+    <span class="a">master_config.py</span>
+    <span class="a">master_receiver.py</span>
+    <span class="a">master_bridge.py</span>
+  <span class="d">services/</span>
+    <span class="a">email.py</span>       <span class="g"># email_service</span>
+    <span class="a">password_hasher.py</span>
+    <span class="a">session_control_helper.py</span>
+  <span class="g"># dead files deleted · one-off</span>
+  <span class="g"># scripts → /scripts (see below)</span></pre>
+    </div>
+  </div>
+  <div class="note tip"><span class="l">Consistent with Task 3</span>This pairs perfectly with splitting <code>admin_router.py</code> — admin becomes <code>admin/routers/*.py</code> and the rest of the HTTP layer becomes <code>api/routers/*.py</code>. One convention everywhere.</div>
+</div></section>
+
+<!-- REST -->
+<section class="sec" id="rest"><div class="wrap">
+  <div class="seclabel">The rest</div>
+  <h2>New scripts/ folder &amp; light touches</h2>
+  <p class="sub">Give one-off scripts a single home, and leave the already-tidy folders mostly alone.</p>
+  <table>
+    <thead><tr><th>Current location</th><th>Move to</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td class="e">tools/*.py</td><td class="to">scripts/</td><td>One-off/cron scripts — not part of the app</td></tr>
+      <tr><td class="e">api/hash_all_passwords.py</td><td class="to">scripts/</td><td>One-time migration</td></tr>
+      <tr><td class="e">api/database_embeddings_change.py</td><td class="to">scripts/</td><td>One-time migration</td></tr>
+      <tr><td class="e">admin/api/update_user_fields_from_excel.py</td><td class="to">scripts/ (dedup)</td><td>Merge the two drifted copies into one</td></tr>
+      <tr><td class="e">chunking_engine/contextual_chunking.py</td><td class="to">core/rag/chunking.py</td><td>Fold in, then delete the folder</td></tr>
+      <tr><td class="e">config/support_kb.py</td><td class="to">(delete)</td><td>Unused</td></tr>
+      <tr><td class="e">audio/ · data/ · image/ · admin/</td><td class="to">leave as-is</td><td>Already reasonably organized</td></tr>
+    </tbody>
+  </table>
+  <div class="note tip"><span class="l">audio/ is a good model</span>Your <code>audio/stt/</code> already uses a subfolder per provider (Sarvam, Deepgram, Azure, Google, AssemblyAI). That's exactly the pattern the new <code>core/</code> subpackages follow — you've done it well once already.</div>
+</div></section>
+
+<!-- HOW -->
+<section class="sec" id="how"><div class="wrap">
+  <div class="seclabel">How to do it without breaking anything</div>
+  <h2>Behaviour-preserving move, in safe steps</h2>
+  <div class="note warn"><span class="l">This touches imports everywhere — respect that</span>Moving files changes every <code>import</code> that points at them. Done carelessly it breaks the app; done in small IDE-assisted steps it's routine. The rules below keep it safe.</div>
+  <div class="check">
+    <div class="k">The safe sequence</div>
+    <ul>
+      <li><b>1. Delete dead code first</b> (the ~4,500 lines) so you move less and file away nothing wasted.</li>
+      <li><b>2. One subpackage at a time</b> — create <code>core/rag/</code>, move its files, let the IDE auto-update imports, boot + smoke-test, commit. Repeat for <code>llm/</code>, <code>config/</code>, etc.</li>
+      <li><b>3. Add <code>__init__.py</code></b> to every new package so imports resolve.</li>
+      <li><b>4. Keep <code>main.py</code> where it is</b> so the Docker/uvicorn entrypoint doesn't change; update <code>include_router</code> import paths as routers move.</li>
+      <li><b>5. Grep for string imports</b> and dynamic loads (e.g. provider-by-name) — those don't auto-update and must be fixed by hand.</li>
+      <li><b>6. Commit in small, labelled batches</b> — one folder per commit — so any move can be reverted cleanly.</li>
+    </ul>
+  </div>
+  <div class="note tip"><span class="l">Best time to do this</span>Right after the dead-code cleanup and ideally <b>before</b> multi-tenancy (Task 12) — reorganizing is far cheaper before big new features land on top of the current layout.</div>
+</div></section>
+
+<footer><div class="wrap">Folder reorganization · core/ &amp; api/ into subpackages · new scripts/ · behaviour-preserving</div></footer>
+
+</body>
+</html>
